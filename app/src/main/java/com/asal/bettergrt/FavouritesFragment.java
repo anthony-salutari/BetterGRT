@@ -1,5 +1,6 @@
 package com.asal.bettergrt;
 
+import android.app.ListFragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -48,6 +49,8 @@ public class FavouritesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getActivity().setTitle("Favourites");
+
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
@@ -67,6 +70,7 @@ public class FavouritesFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
+            recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
             recyclerView.setAdapter(new MyfavouritesRecyclerViewAdapter(DummyContent.ITEMS, mListener));
         }
         return view;

@@ -3,10 +3,15 @@ package com.asal.bettergrt;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -29,7 +34,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-public class NearMe extends FragmentActivity implements OnMapReadyCallback,
+public class NearMe extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
@@ -46,8 +51,74 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
 
     private static final int PERMISSION_FINE_LOCATION = 1;
 
+    public static NearMe newInstance() {
+        NearMe nearMe = new NearMe();
+
+        return nearMe;
+    }
+
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.activity_near_me, container, false);
+
+        getActivity().setTitle("Near Me");
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+        stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
+        mSlidingLayout = (SlidingUpPanelLayout) rootView.findViewById(R.id.sliding_layout);
+
+        mSlidingLayout.setPanelState(PanelState.HIDDEN);
+
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+            } else {
+                ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_FINE_LOCATION);
+            }
+        }
+
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(100000000);
+        mLocationRequest.setFastestInterval(5000000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        stops = new ArrayList<>();
+        String next[];
+
+        try {
+            CSVReader reader = new CSVReader(new InputStreamReader(getActivity().getAssets().open("stops.txt")));
+            while (true) {
+                next = reader.readNext();
+                if (next != null) {
+                    stops.add(next);
+                }
+                else {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // handle exception
+        }
+
+        //return super.onCreateView(inflater, container, savedInstanceState);
+
+        return rootView;
+    }
+
+/*    @Override
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_near_me);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -84,29 +155,6 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
         mLocationRequest.setFastestInterval(5000000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        // testing load data
-/*        try {
-            LoadData loadData = new LoadData();
-            ArrayList<BusRoute> routes = new ArrayList<>();
-            InputStreamReader routeStreamReader = new InputStreamReader(getAssets().open("routes.txt"));
-            routes = loadData.loadBusRoutes(routeStreamReader);
-
-            ArrayList<BusStop> busStops = new ArrayList<>();
-            InputStreamReader stopsStreamReader = new InputStreamReader(getAssets().open("stops.txt"));
-            busStops = loadData.loadBusStops(stopsStreamReader);
-
-            ArrayList<BusTrip> busTrips = new ArrayList<>();
-            InputStreamReader tripsStreamReader = new InputStreamReader(getAssets().open("trips.txt"));
-            busTrips = loadData.loadBusTrips(tripsStreamReader);
-
-            ArrayList<StopTime> stopTimes = new ArrayList<>();
-            InputStreamReader timesStreamReader = new InputStreamReader(getAssets().open("stop_times.txt"));
-            stopTimes = loadData.loadStopTimes(timesStreamReader);
-        }
-        catch (Exception e) {
-            e.getMessage();
-        }*/
-
         stops = new ArrayList<>();
         String next[];
 
@@ -124,7 +172,7 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
         } catch (Exception e) {
             // handle exception
         }
-    }
+    }*/
 
     /**
      * Manipulates the map once available.
@@ -141,7 +189,7 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
 
         UiSettings settings = mMap.getUiSettings();
         settings.setMapToolbarEnabled(false);
-        stopsClusterManager = new ClusterManager<>(this, mMap);
+        stopsClusterManager = new ClusterManager<>(getActivity(), mMap);
         mMap.setOnCameraChangeListener(stopsClusterManager);
         mMap.setOnMarkerClickListener(stopsClusterManager);
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -170,13 +218,13 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         mGoogleApiClient.connect();
         super.onStart();
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         mGoogleApiClient.disconnect();
         super.onStop();
     }
@@ -197,7 +245,12 @@ public class NearMe extends FragmentActivity implements OnMapReadyCallback,
     }
 
     protected void startLocationUpdates() {
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        try {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+        catch (SecurityException e) {
+            // handle exception
+        }
     }
 
     @Override
