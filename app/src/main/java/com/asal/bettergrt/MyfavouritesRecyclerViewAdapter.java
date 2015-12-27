@@ -1,10 +1,13 @@
 package com.asal.bettergrt;
 
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 //import com.asal.bettergrt.ItemFragment.OnListFragmentInteractionListener;
 import com.asal.bettergrt.dummy.DummyContent.DummyItem;
@@ -36,7 +39,6 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
         holder.mContentView.setText(mValues.get(position).content);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -58,15 +60,22 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mIdView;
         public final TextView mContentView;
+        public final ImageButton mDeleteButton;
         public DummyItem mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
             mContentView = (TextView) view.findViewById(R.id.content);
+            mDeleteButton = (ImageButton) view.findViewById(R.id.deleteButton);
+
+            mDeleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(mView.getContext(), "Delete coming soon", Toast.LENGTH_LONG).show();
+                }
+            });
         }
 
         @Override

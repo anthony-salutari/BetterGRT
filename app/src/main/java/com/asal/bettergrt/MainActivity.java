@@ -23,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.asal.bettergrt.dummy.DummyContent;
 import com.google.android.gms.maps.MapFragment;
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity
             // first time launching app, let's load all the data
             loadData();
 
-            editor.putBoolean("first", false).commit();
+            editor.putBoolean("first", false).apply();
         }
     }
 
@@ -98,6 +99,11 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        if (id == R.id.action_search) {
+            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Search coming soon", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -109,8 +115,6 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         if (id == R.id.nav_near_me) {
-            //Intent intent = new Intent(this, NearMe.class);
-            //startActivity(intent);
             NearMe fragment = (NearMe) getSupportFragmentManager().findFragmentById(R.id.nearMeLayout);
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragment = NearMe.newInstance();
@@ -163,10 +167,10 @@ public class MainActivity extends AppCompatActivity
 
                 try {
                     loadData.loadStopTimes(new InputStreamReader(getAssets().open(STOP_TIMES_PATH)));
-
                     progressDialog.dismiss();
                 } catch (Exception e) {
-                    // handle exception
+                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             }
         }).start();
@@ -177,7 +181,8 @@ public class MainActivity extends AppCompatActivity
                 try {
                     loadData.loadBusTrips(new InputStreamReader(getAssets().open(TRIPS_PATH)));
                 } catch (Exception e) {
-                    // handle exception
+                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             }
         }).start();
@@ -188,7 +193,8 @@ public class MainActivity extends AppCompatActivity
                 try {
                     loadData.loadBusRoutes(new InputStreamReader(getAssets().open(ROUTES_PATH)));
                 } catch (Exception e) {
-                    // handle exception
+                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             }
         }).start();
@@ -199,7 +205,8 @@ public class MainActivity extends AppCompatActivity
                 try {
                     loadData.loadBusStops(new InputStreamReader(getAssets().open(STOPS_PATH)));
                 } catch (Exception e) {
-                    // handle exception
+                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             }
         }).start();

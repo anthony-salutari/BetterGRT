@@ -4,9 +4,9 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -24,19 +24,26 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.MarkerManager;
 import com.google.maps.android.clustering.ClusterManager;
 import com.opencsv.CSVReader;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class NearMe extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
+        GoogleMap.OnCameraChangeListener,
+        GoogleMap.OnMarkerClickListener,
         LocationListener {
 
     private GoogleMap mMap;
@@ -46,6 +53,8 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private ArrayList<String[]> stops;
     private ClusterManager<OldBusStop> stopsClusterManager;
     private SlidingUpPanelLayout mSlidingLayout;
+    private MarkerManager markerManager;
+    private Marker mPrevMarker;
 
     private TextView stopDetails;
 
@@ -109,7 +118,8 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 }
             }
         } catch (Exception e) {
-            // handle exception
+            Snackbar snackbar = Snackbar.make(getView(), "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+            snackbar.show();
         }
 
         //return super.onCreateView(inflater, container, savedInstanceState);
@@ -117,104 +127,29 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         return rootView;
     }
 
-/*    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_near_me);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-
-        stopDetails = (TextView) findViewById(R.id.stopDetails);
-        mSlidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
-
-        // hide the slide layout
-        mSlidingLayout.setPanelState(PanelState.HIDDEN);
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-            } else {
-                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_FINE_LOCATION);
-            }
-        }
-
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(100000000);
-        mLocationRequest.setFastestInterval(5000000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        stops = new ArrayList<>();
-        String next[];
-
-        try {
-            CSVReader reader = new CSVReader(new InputStreamReader(getAssets().open("stops.txt")));
-            while (true) {
-                next = reader.readNext();
-                if (next != null) {
-                    stops.add(next);
-                }
-                else {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            // handle exception
-        }
-    }*/
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
         UiSettings settings = mMap.getUiSettings();
         settings.setMapToolbarEnabled(false);
-        stopsClusterManager = new ClusterManager<>(getActivity(), mMap);
-        mMap.setOnCameraChangeListener(stopsClusterManager);
-        mMap.setOnMarkerClickListener(stopsClusterManager);
+        mMap.setOnCameraChangeListener(this);
+        mMap.setOnMarkerClickListener(this);
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
                 if (mSlidingLayout.getPanelState() != PanelState.HIDDEN) {
                     mSlidingLayout.setPanelState(PanelState.HIDDEN);
                 }
+
+                if (mPrevMarker != null) {
+                    mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+                }
             }
         });
 
-        stopsClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<OldBusStop>() {
-            @Override
-            public boolean onClusterItemClick(OldBusStop busStop) {
-                // stop chosen, show the slide layout and bus stop info
-                mSlidingLayout.setPanelState(PanelState.COLLAPSED);
-                stopDetails.setText(busStop.getId() + " " + busStop.name);
-                return false;
-            }
-        });
-
-        // Add a marker in Sydney and move the camera
-/*        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+        markerManager = new MarkerManager(mMap);
+        markerManager.newCollection("markerCollection");
     }
 
     @Override
@@ -249,7 +184,8 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
         catch (SecurityException e) {
-            // handle exception
+            Snackbar snackbar = Snackbar.make(getView(), "Error " + e.getMessage(), Snackbar.LENGTH_LONG);
+            snackbar.show();
         }
     }
 
@@ -275,11 +211,11 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 stop.id = Integer.parseInt(stops.get(i)[3]);
                 stop.name = stops.get(i)[7];
 
-                stopsClusterManager.addItem(stop);
-                //mMap.addMarker(new MarkerOptions().position(stop.location).title(stop.id + " " + stop.name));
+                markerManager.getCollection("markerCollection").addMarker(new MarkerOptions().position(stop.location).title(stop.id + " " + stop.name));
 
             } catch (Exception e) {
-                // handle exception
+                Snackbar snackbar = Snackbar.make(getView(), "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                snackbar.show();
             }
         }
     }
@@ -294,10 +230,49 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                     startLocationUpdates();
                 }
                 else {
-
+                    //todo handle denied location permission
                 }
                 return;
             }
         }
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        Collection<Marker> markers =  markerManager.getCollection("markerCollection").getMarkers();
+        Marker[] markerList = markers.toArray(new Marker[markers.size()]);
+
+        for (int i = 0; i < markerList.length; i++) {
+            if(i % 100 == 0) {
+                markerList[i].setVisible(cameraPosition.zoom > 8);
+            }
+            else if (i % 10 == 0) {
+                markerList[i].setVisible(cameraPosition.zoom > 12);
+            }
+            else {
+                markerList[i].setVisible(cameraPosition.zoom > 14);
+            }
+        }
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        if (mPrevMarker != null) {
+            mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+        }
+        mPrevMarker = marker;
+
+        if (mSlidingLayout.getPanelState() != PanelState.EXPANDED) {
+            mSlidingLayout.setPanelState(PanelState.COLLAPSED);
+        }
+        else {
+            mSlidingLayout.setPanelState(PanelState.EXPANDED);
+        }
+
+        marker.hideInfoWindow();
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
+        stopDetails.setText(marker.getTitle());
+        return true;
     }
 }
