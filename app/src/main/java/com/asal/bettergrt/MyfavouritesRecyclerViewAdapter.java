@@ -73,7 +73,8 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
             mDeleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(mView.getContext(), "Delete coming soon", Toast.LENGTH_LONG).show();
+                    Snackbar snackbar = Snackbar.make(v, "Delete coming soon", Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             });
         }

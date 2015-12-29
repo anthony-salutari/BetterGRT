@@ -9,10 +9,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -71,6 +73,21 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.activity_near_me, container, false);
 
+        rootView.setFocusableInTouchMode(true);
+        rootView.requestFocus();
+        rootView.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_BACK) {
+                        backPressed();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
         getActivity().setTitle("Near Me");
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -98,6 +115,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                     .build();
         }
 
+        // todo set these values correctly
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(100000000);
         mLocationRequest.setFastestInterval(5000000);
@@ -270,9 +288,21 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         }
 
         marker.hideInfoWindow();
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
         stopDetails.setText(marker.getTitle());
         return true;
+    }
+
+    private void backPressed() {
+        if (mPrevMarker != null) {
+            if (mSlidingLayout.getPanelState() == PanelState.EXPANDED) {
+                mSlidingLayout.setPanelState(PanelState.COLLAPSED);
+            }
+            else if (mSlidingLayout.getPanelState() == PanelState.COLLAPSED) {
+                mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+                mSlidingLayout.setPanelState(PanelState.HIDDEN);
+            }
+        }
     }
 }

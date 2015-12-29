@@ -43,8 +43,7 @@ public class LoadData {
                 }
             }
         } catch (Exception e) {
-            // handle exception
-            e.getMessage();
+            throw new RuntimeException(e.getMessage());
         }
 
         return routes;
@@ -76,8 +75,7 @@ public class LoadData {
                 }
             }
         } catch (Exception e) {
-            // handle exception
-            e.getMessage();
+            throw new RuntimeException(e.getMessage());
         }
 
         return stops;
@@ -111,7 +109,7 @@ public class LoadData {
                 }
             }
         } catch (Exception e) {
-            // handle exception
+            throw new RuntimeException(e.getMessage());
         }
 
         return trips;
@@ -143,9 +141,8 @@ public class LoadData {
                 }
             }
         } catch (Exception e) {
-            // handle exception
+            throw new RuntimeException(e.getMessage());
         }
-
         return stopTimes;
     }
 }
