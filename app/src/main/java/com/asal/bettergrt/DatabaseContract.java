@@ -17,7 +17,7 @@ public final class DatabaseContract {
         public static final String COLUMN_NAME_STOPS_STOP_LON = "stopLon";
         public static final String COLUMN_NAME_STOPS_STOP_ID = "stopID";
         public static final String COLUMN_NAME_STOPS_STOP_NAME = "stopName";
-        public static final String COLUMN_NAME_STOPS_STOP_LOCATION = "location";
+        //public static final String COLUMN_NAME_STOPS_STOP_LOCATION = "location";
     }
 
     public static abstract class BusRouteEntry implements BaseColumns {
@@ -52,7 +52,9 @@ public final class DatabaseContract {
         public static final String FAVOURITES_TABLE_NAME = "favourites";
         public static final String COLUMN_NAME_FAVOURITES_STOP_NUMBER = "stopNumber";
         public static final String COLUMN_NAME_FAVOURITES_STOP_NAME = "stopName";
-        public static final String COLUMN_NAME_FAVOURITES_LOCATION = "location";
+        public static final String COLUMN_NAME_FAVOURITES_STOP_LAT = "stopLat";
+        public static final String COLUMN_NAME_FAVOURITES_STOP_LON = "stopLon";
+        //public static final String COLUMN_NAME_FAVOURITES_LOCATION = "location";
         public static final String COLUMN_NAME_FAVOURITES_NICKNAME = "nickname";
     }
 }

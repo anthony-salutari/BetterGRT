@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -73,7 +74,18 @@ public class MainActivity extends AppCompatActivity
 
         if (mPreferences.getBoolean("first", true)) {
             // first time launching app, let's load all the data
-            loadData();
+
+            // configure progressDialog
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setTitle("Loading Information");
+            progressDialog.setMessage("Loading current bus information. Please wait");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.setCancelable(false);
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.show();
+
+            //LoadDataAsync loadDataAsync = new LoadDataAsync(this);
+            //loadDataAsync.execute();
 
             editor.putBoolean("first", false).apply();
         }
@@ -155,18 +167,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadData() {
-        final LoadData loadData = new LoadData();
+        InputStreamReader[] streamReaders = new InputStreamReader[4];
 
-        // configure progressDialog
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setTitle("Loading Information");
-        progressDialog.setMessage("Loading current bus information. Please wait");
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressDialog.setCancelable(false);
-        progressDialog.setCanceledOnTouchOutside(false);
-        progressDialog.show();
+        try {
+            streamReaders[0] = new InputStreamReader(getAssets().open(STOP_TIMES_PATH));
+            streamReaders[1] = new InputStreamReader(getAssets().open(ROUTES_PATH));
+            streamReaders[2] = new InputStreamReader(getAssets().open(STOPS_PATH));
+            streamReaders[3] = new InputStreamReader(getAssets().open(TRIPS_PATH));
+        } catch (Exception e) {
+            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
 
-        new Thread(new Runnable() {
+        LoadData loadData = new LoadData(this, streamReaders);
+
+ /*       new Thread(new Runnable() {
             @Override
             public void run() {
 
@@ -214,7 +229,7 @@ public class MainActivity extends AppCompatActivity
                     snackbar.show();
                 }
             }
-        }).start();
+        }).start();*/
     }
 
     @Override
@@ -226,5 +241,42 @@ public class MainActivity extends AppCompatActivity
     public void onFragmentInteraction(Uri uri) {
 
     }
-}
 
+    private class LoadDataAsync extends AsyncTask<Void, Void, Void> {
+        private InputStreamReader[] streamReaders;
+        private Context context;
+
+        public LoadDataAsync(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            //super.onPreExecute();
+
+            streamReaders = new InputStreamReader[4];
+
+            try {
+                streamReaders[0] = new InputStreamReader(getAssets().open(STOP_TIMES_PATH));
+                streamReaders[1] = new InputStreamReader(getAssets().open(ROUTES_PATH));
+                streamReaders[2] = new InputStreamReader(getAssets().open(STOPS_PATH));
+                streamReaders[3] = new InputStreamReader(getAssets().open(TRIPS_PATH));
+            } catch (Exception e) {
+                Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
+                snackbar.show();
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            LoadData loadData = new LoadData(context, streamReaders);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            //super.onPostExecute(aVoid);
+            progressDialog.dismiss();
+        }
+    }
+}

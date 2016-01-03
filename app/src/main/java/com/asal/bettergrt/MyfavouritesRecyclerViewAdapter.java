@@ -74,6 +74,13 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
                 @Override
                 public void onClick(View v) {
                     Snackbar snackbar = Snackbar.make(v, "Delete coming soon", Snackbar.LENGTH_LONG);
+                    //snackbar.setActionTextColor();
+                    snackbar.setAction("Undo", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                        }
+                    });
                     snackbar.show();
                 }
             });

@@ -9,6 +9,8 @@ public class Favourite {
 
     private int stopNumber;
     private String stopName;
+    private double stopLat;
+    private double stopLon;
     private LatLng location;
     private String nickname;
 
@@ -22,6 +24,17 @@ public class Favourite {
         this.stopNumber = stopNumber;
         this.stopName = stopName;
         this.location = location;
+        this.stopLat = location.latitude;
+        this.stopLon = location.longitude;
+    }
+
+    // secondary constructor
+    public Favourite(int stopNumber, String stopName, double stopLat, double stopLon) {
+        this.stopNumber = stopNumber;
+        this.stopName = stopName;
+        this.stopLat = stopLat;
+        this.stopLon = stopLon;
+        this.location = new LatLng(stopLat, stopLon);
     }
 
     // setters
@@ -31,6 +44,14 @@ public class Favourite {
 
     public void setStopName(String stopName) {
         this.stopName = stopName;
+    }
+
+    public void setStopLat(double stopLat) {
+        this.stopLat = stopLat;
+    }
+
+    public void setStopLon(double stopLon) {
+        this.stopLon = stopLon;
     }
 
     public void setLocation(LatLng location) {
@@ -49,6 +70,14 @@ public class Favourite {
 
     public String getStopName() {
         return this.stopName;
+    }
+
+    public double getStopLat() {
+        return this.stopLat;
+    }
+
+    public double getStopLon() {
+        return this.stopLon;
     }
 
     public LatLng getLocation() {

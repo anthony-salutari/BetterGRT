@@ -278,6 +278,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         if (mPrevMarker != null) {
             mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
         }
+
         mPrevMarker = marker;
 
         if (mSlidingLayout.getPanelState() != PanelState.EXPANDED) {
@@ -289,7 +290,12 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
         marker.hideInfoWindow();
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
+        if (mMap.getCameraPosition().zoom < 15) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
+        }
+        else {
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()), 1000, null);
+        }
         stopDetails.setText(marker.getTitle());
         return true;
     }
