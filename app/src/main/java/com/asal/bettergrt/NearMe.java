@@ -9,6 +9,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,13 +34,21 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.google.maps.android.clustering.ClusterManager;
-import com.opencsv.CSVReader;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class NearMe extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -52,11 +61,12 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
-    private ArrayList<String[]> stops;
+    private ArrayList<BusStop> stops;
     private ClusterManager<OldBusStop> stopsClusterManager;
     private SlidingUpPanelLayout mSlidingLayout;
     private MarkerManager markerManager;
     private Marker mPrevMarker;
+    private final OkHttpClient okHttpClient;
 
     private TextView stopDetails;
 
@@ -66,6 +76,38 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         NearMe nearMe = new NearMe();
 
         return nearMe;
+    }
+
+    public NearMe() {
+        okHttpClient = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(getString(R.string.web_service_url) + "/getStops")
+                .build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Toast.makeText(getActivity(), "Loading stops failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.d("BetterGRT", "onFailure: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    try {
+                        JSONObject json = new JSONObject(response.body().string());
+
+                        
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
+                        Log.d("BetterGRT", "onResponse: " + e.getMessage());
+                    }
+                }
+            }
+        });
+
+        this.updateMap();
     }
 
     @Nullable
@@ -121,24 +163,9 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         mLocationRequest.setFastestInterval(5000000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        stops = new ArrayList<>();
-        String next[];
+        //stops = new ArrayList<>();
 
-        try {
-            CSVReader reader = new CSVReader(new InputStreamReader(getActivity().getAssets().open("stops.txt")));
-            while (true) {
-                next = reader.readNext();
-                if (next != null) {
-                    stops.add(next);
-                }
-                else {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            Snackbar snackbar = Snackbar.make(getView(), "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-            snackbar.show();
-        }
+        String next[];
 
         //return super.onCreateView(inflater, container, savedInstanceState);
 
@@ -218,9 +245,25 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(18));
 
+        if (stops.size() != 0) {
+            for (BusStop stop : stops) {
+                try {
+                    double latitude = stop.stopLat;
+                    double longitude = stop.stopLon;
+                    LatLng stopLocation = new LatLng(latitude, longitude);
+                    stop.location = stopLocation;
+
+                    markerManager.getCollection("markerCollection").addMarker(new MarkerOptions().position(stop.location).title(stop.stopID + " " + stop.stopName));
+                } catch (Exception e) {
+                    Log.d("BetterGRT", e.getMessage());
+                }
+            }
+        }
+
         // add markers for each stop
-        for (int i = 0; i < stops.size(); i++) {
+/*        for (int i = 0; i < stops.size(); i++) {
             try {
+
                 double latitude = Double.parseDouble(stops.get(i)[0]);
                 double longitude = Double.parseDouble(stops.get(i)[2]);
                 LatLng stopLocation = new LatLng(latitude, longitude);
@@ -235,7 +278,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 Snackbar snackbar = Snackbar.make(getView(), "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
                 snackbar.show();
             }
-        }
+        }*/
     }
 
     @Override

@@ -166,72 +166,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void loadData() {
-        InputStreamReader[] streamReaders = new InputStreamReader[4];
-
-        try {
-            streamReaders[0] = new InputStreamReader(getAssets().open(STOP_TIMES_PATH));
-            streamReaders[1] = new InputStreamReader(getAssets().open(ROUTES_PATH));
-            streamReaders[2] = new InputStreamReader(getAssets().open(STOPS_PATH));
-            streamReaders[3] = new InputStreamReader(getAssets().open(TRIPS_PATH));
-        } catch (Exception e) {
-            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-            snackbar.show();
-        }
-
-        LoadData loadData = new LoadData(this, streamReaders);
-
- /*       new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                try {
-                    loadData.loadStopTimes(new InputStreamReader(getAssets().open(STOP_TIMES_PATH)));
-                    progressDialog.dismiss();
-                } catch (Exception e) {
-                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            }
-        }).start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    loadData.loadBusTrips(new InputStreamReader(getAssets().open(TRIPS_PATH)));
-                } catch (Exception e) {
-                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            }
-        }).start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    loadData.loadBusRoutes(new InputStreamReader(getAssets().open(ROUTES_PATH)));
-                } catch (Exception e) {
-                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            }
-        }).start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    loadData.loadBusStops(new InputStreamReader(getAssets().open(STOPS_PATH)));
-                } catch (Exception e) {
-                    Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            }
-        }).start();*/
-    }
-
     @Override
     public void onListFragmentInteraction(DummyContent.DummyItem item) {
 
@@ -240,43 +174,5 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFragmentInteraction(Uri uri) {
 
-    }
-
-    private class LoadDataAsync extends AsyncTask<Void, Void, Void> {
-        private InputStreamReader[] streamReaders;
-        private Context context;
-
-        public LoadDataAsync(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            //super.onPreExecute();
-
-            streamReaders = new InputStreamReader[4];
-
-            try {
-                streamReaders[0] = new InputStreamReader(getAssets().open(STOP_TIMES_PATH));
-                streamReaders[1] = new InputStreamReader(getAssets().open(ROUTES_PATH));
-                streamReaders[2] = new InputStreamReader(getAssets().open(STOPS_PATH));
-                streamReaders[3] = new InputStreamReader(getAssets().open(TRIPS_PATH));
-            } catch (Exception e) {
-                Snackbar snackbar = Snackbar.make(coordinatorLayout, "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                snackbar.show();
-            }
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            LoadData loadData = new LoadData(context, streamReaders);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            //super.onPostExecute(aVoid);
-            progressDialog.dismiss();
-        }
     }
 }
