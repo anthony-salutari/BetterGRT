@@ -12,6 +12,7 @@ public class BusStop implements ClusterItem{
     public int stopID;
     public String stopName;
     public LatLng location;
+    public String parentStation;
 
     @Override
     public LatLng getPosition() {

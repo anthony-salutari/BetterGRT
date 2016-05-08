@@ -2,6 +2,7 @@
     <string name="app_name">BetterGRT</string>
     <string name="title_activity_near_me">Near Me</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="google_app_id">347140174202</string>
 
     // navigation drawer strings
     <string name="navigation_drawer_open">Open navigation drawer</string>

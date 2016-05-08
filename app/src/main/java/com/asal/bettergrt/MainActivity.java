@@ -61,34 +61,22 @@ public class MainActivity extends AppCompatActivity
         // load default section
         navigationView.setCheckedItem(R.id.nav_near_me);
         if (savedInstanceState == null) {
-            NearMe fragment = (NearMe) getSupportFragmentManager().findFragmentById(R.id.nearMeLayout);
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            NearMe nearMe = new NearMe();
+            fragmentTransaction.replace(R.id.frameLayout, nearMe);
+            fragmentTransaction.commit();
+
+/*            NearMe fragment = (NearMe) getSupportFragmentManager().findFragmentById(R.id.nearMeLayout);
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragment = NearMe.newInstance();
             fragmentTransaction.replace(R.id.frameLayout, fragment);
-            fragmentTransaction.commit();
+            fragmentTransaction.commit();*/
         }
 
         // check if first time running application with sharedpreferences
         mPreferences = getSharedPreferences("app_status", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = mPreferences.edit();
-
-        if (mPreferences.getBoolean("first", true)) {
-            // first time launching app, let's load all the data
-
-            // configure progressDialog
-            progressDialog = new ProgressDialog(this);
-            progressDialog.setTitle("Loading Information");
-            progressDialog.setMessage("Loading current bus information. Please wait");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setCancelable(false);
-            progressDialog.setCanceledOnTouchOutside(false);
-            progressDialog.show();
-
-            //LoadDataAsync loadDataAsync = new LoadDataAsync(this);
-            //loadDataAsync.execute();
-
-            editor.putBoolean("first", false).apply();
-        }
     }
 
     @Override
