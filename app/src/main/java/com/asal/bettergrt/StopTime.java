@@ -5,6 +5,7 @@ package com.asal.bettergrt;
  */
 public class StopTime {
     public int tripID;
+    public String tripHeadsign;
     public String arrivalTime;
     public String departureTime;
     public String stopID;
