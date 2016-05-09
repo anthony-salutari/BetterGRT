@@ -8,6 +8,6 @@ public class StopTime {
     public String tripHeadsign;
     public String arrivalTime;
     public String departureTime;
-    public String stopID;
+    public String routeID;
     public int stopSequence;
 }

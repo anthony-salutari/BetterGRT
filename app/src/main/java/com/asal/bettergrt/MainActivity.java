@@ -29,7 +29,8 @@ import java.io.InputStreamReader;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         FavouritesFragment.OnListFragmentInteractionListener,
-        AboutFragment.OnFragmentInteractionListener {
+        AboutFragment.OnFragmentInteractionListener,
+        NearMe.OnListFragmentInteractionListener {
 
     private SharedPreferences mPreferences;
     private ProgressDialog progressDialog;
@@ -161,6 +162,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onFragmentInteraction(Uri uri) {
+
+    }
+
+    @Override
+    public void onListFragmentInteraction(StopTime item) {
 
     }
 }

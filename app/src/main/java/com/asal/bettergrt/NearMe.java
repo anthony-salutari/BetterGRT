@@ -1,6 +1,7 @@
 package com.asal.bettergrt;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Handler;
@@ -12,11 +13,15 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +42,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
 import com.google.maps.android.clustering.ClusterManager;
+import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
@@ -47,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -71,6 +78,12 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private MarkerManager markerManager;
     private Marker mPrevMarker;
 
+    private RecyclerView mRecyclerView;
+    private StopTimesAdapter mAdapter;
+
+    private ArrayList<StopTime> mStopTimes;
+    private OnListFragmentInteractionListener mListener;
+
     private TextView stopDetails;
 
     private static final int PERMISSION_FINE_LOCATION = 1;
@@ -82,48 +95,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     }
 
     public NearMe() {
-/*        okHttpClient = new OkHttpClient();
-        stops = new ArrayList<>();
 
-        Request request = new Request.Builder()
-                .url(getString(R.string.web_service_url) + "/getStops")
-                .build();*/
-
-        /*okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Toast.makeText(getActivity(), "Loading stops failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                Log.d("BetterGRT", "onFailure: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    try {
-                        JSONArray jsonArray = new JSONArray(response.body().string());
-
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-                            BusStop busStop = new BusStop();
-                            busStop.stopID = Integer.parseInt(jsonObject.getString("stop_id"));
-                            busStop.stopName = jsonObject.getString("stop_name");
-                            busStop.stopLat = Double.parseDouble(jsonObject.getString("stop_lat"));
-                            busStop.stopLon = Double.parseDouble(jsonObject.getString("stop_lon"));
-                            busStop.parentStation = jsonObject.getString("parent_station");
-                            busStop.location = new LatLng(busStop.stopLat, busStop.stopLon);
-
-                            stops.add(busStop);
-                        }
-
-                        updateMap();
-                    } catch (Exception e) {
-                        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
-                        Log.d("BetterGRT", "onResponse: " + e.getMessage());
-                    }
-                }
-            }
-        });*/
     }
 
     @Nullable
@@ -145,6 +117,15 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 return false;
             }
         });
+
+        mStopTimes = new ArrayList<>();
+
+        // set up recyclerview
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.scrollableView);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mAdapter = new StopTimesAdapter(mStopTimes, mListener);
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
 
         getActivity().setTitle("Near Me");
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
@@ -232,6 +213,23 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         //return super.onCreateView(inflater, container, savedInstanceState);
 
         return rootView;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnListFragmentInteractionListener) {
+            mListener = (OnListFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnListFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
     }
 
     @Override
@@ -381,7 +379,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
+    public boolean onMarkerClick(final Marker marker) {
         if (mPrevMarker != null) {
             mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
         }
@@ -404,6 +402,51 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()), 1000, null);
         }
         stopDetails.setText(marker.getTitle());
+
+        String stopID = marker.getTitle().substring(0, marker.getTitle().indexOf(" "));
+
+        mStopTimes.clear();
+
+        // load stop times in recyclerview
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(getString(R.string.web_service_url) + "/getStopTimes?stopID=" + stopID)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.d("BetterGRT", "onFailure: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    try {
+                        JSONObject jsonResponse = new JSONObject(response.body().string());
+
+                        JSONArray jsonArray = jsonResponse.getJSONArray("info");
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                            StopTime stopTime = new StopTime();
+                            stopTime.routeID = jsonObject.getString("route_id");
+                            stopTime.tripHeadsign = jsonObject.getString("trip_headsign");
+                            stopTime.departureTime = jsonObject.getString("departure_time");
+
+                            mStopTimes.add(stopTime);
+                        }
+
+                        mAdapter.addItems(mStopTimes);
+                    } catch (Exception e) {
+                        // handle exception
+                    }
+                }
+            }
+        });
+
         return true;
     }
 

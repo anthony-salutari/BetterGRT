@@ -13,7 +13,8 @@
         sothree:umanoPanelHeight="68dp"
         sothree:umanoShadowHeight="4dp"
         sothree:umanoFadeColor="@android:color/transparent"
-        sothree:umanoOverlay="true" >
+        sothree:umanoOverlay="true"
+        sothree:umanoScrollableView="@+id/scrollableView" >
 
         <!-- main content -->
         <FrameLayout
@@ -81,11 +82,19 @@
 
             </LinearLayout>
 
-            <ExpandableListView
-                android:layout_width="match_parent"
+           <!--<android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
                 android:layout_height="match_parent"
-                android:id="@+id/stopTimesList">
-            </ExpandableListView>
+                android:layout_width="match_parent"
+                android:id="@+id/stopTimesList"
+                tools:listitem="@layout/stop_time"
+                android:scrollbars="vertical" />-->
+
+            <include layout="@layout/stop_times_list"
+                android:id="@+id/scrollableView"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent" />
 
         </LinearLayout>
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>

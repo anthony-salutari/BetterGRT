@@ -6,16 +6,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 /**
  * Created by Anthony on 5/8/2016.
  */
 public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.ViewHolder> {
-    private final List<StopTime> mValues;
+    private ArrayList<StopTime> mValues;
     private final NearMe.OnListFragmentInteractionListener mListener;
 
-    public StopTimesAdapter(List<StopTime> items, NearMe.OnListFragmentInteractionListener listener) {
+    public StopTimesAdapter(ArrayList<StopTime> items, NearMe.OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -23,13 +25,13 @@ public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.View
     @Override
     public StopTimesAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_favourites, parent, false);
+                .inflate(R.layout.stop_time, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(final StopTimesAdapter.ViewHolder holder, int position) {
-        holder.mTripHeadsign.setText(mValues.get(position).tripHeadsign);
+        holder.mTripHeadsign.setText(mValues.get(position).tripHeadsign.replace("\"", ""));
         holder.mDepartureTime.setText(mValues.get(position).departureTime);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -40,6 +42,11 @@ public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.View
                 }
             }
         });
+    }
+
+    public void addItems(ArrayList<StopTime> items) {
+        mValues = items;
+        notifyDataSetChanged();
     }
 
     @Override

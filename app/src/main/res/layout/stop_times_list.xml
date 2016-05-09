@@ -4,4 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:id="@+id/stopTimesList"/>
+    android:id="@+id/stopTimesList"
+    tools:listitem="@layout/stop_time"
+    android:scrollbars="vertical" />
