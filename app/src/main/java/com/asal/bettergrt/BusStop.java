@@ -9,7 +9,7 @@ import com.google.maps.android.clustering.ClusterItem;
 public class BusStop implements ClusterItem{
     public double stopLat;
     public double stopLon;
-    public int stopID;
+    public String stopID;
     public String stopName;
     public LatLng location;
     public String parentStation;

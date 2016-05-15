@@ -66,7 +66,8 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnCameraChangeListener,
         GoogleMap.OnMarkerClickListener,
-        LocationListener {
+        LocationListener,
+        SlidingUpPanelLayout.PanelSlideListener {
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -85,6 +86,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private OnListFragmentInteractionListener mListener;
 
     private TextView stopDetails;
+    private final float anchorPoint = 0.3f;
 
     private static final int PERMISSION_FINE_LOCATION = 1;
 
@@ -126,6 +128,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         mAdapter = new StopTimesAdapter(mStopTimes, mListener);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
+        mRecyclerView.setHasFixedSize(true);
 
         getActivity().setTitle("Near Me");
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
@@ -133,7 +136,6 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
         stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
         mSlidingLayout = (SlidingUpPanelLayout) rootView.findViewById(R.id.sliding_layout);
-
         mSlidingLayout.setPanelState(PanelState.HIDDEN);
 
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -187,7 +189,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                             JSONObject jsonObject = jsonArray.getJSONObject(i);
 
                             BusStop busStop = new BusStop();
-                            busStop.stopID = Integer.parseInt(jsonObject.getString("stop_id"));
+                            busStop.stopID = jsonObject.getString("stop_id");
                             busStop.stopName = jsonObject.getString("stop_name").replace("\"", "");
                             busStop.stopLat = Double.parseDouble(jsonObject.getString("stop_lat"));
                             busStop.stopLon = Double.parseDouble(jsonObject.getString("stop_lon"));
@@ -386,22 +388,17 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
         mPrevMarker = marker;
 
-        if (mSlidingLayout.getPanelState() != PanelState.EXPANDED) {
-            mSlidingLayout.setPanelState(PanelState.COLLAPSED);
-        }
-        else {
-            mSlidingLayout.setPanelState(PanelState.EXPANDED);
-        }
+        stopDetails.setText(marker.getTitle());
 
         marker.hideInfoWindow();
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        //marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(207));
         if (mMap.getCameraPosition().zoom < 15) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
         }
         else {
             mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()), 1000, null);
         }
-        stopDetails.setText(marker.getTitle());
 
         String stopID = marker.getTitle().substring(0, marker.getTitle().indexOf(" "));
 
@@ -439,13 +436,25 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                             mStopTimes.add(stopTime);
                         }
 
-                        mAdapter.addItems(mStopTimes);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAdapter.addItems(mStopTimes);
+                            }
+                        });
                     } catch (Exception e) {
                         // handle exception
                     }
                 }
             }
         });
+
+        if (mSlidingLayout.getPanelState() != PanelState.EXPANDED) {
+            mSlidingLayout.setPanelState(PanelState.COLLAPSED);
+        }
+        else {
+            mSlidingLayout.setPanelState(PanelState.EXPANDED);
+        }
 
         return true;
     }
@@ -464,6 +473,16 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
     private void runOnUiThread(Runnable task) {
         new Handler(Looper.getMainLooper()).post(task);
+    }
+
+    @Override
+    public void onPanelSlide(View panel, float slideOffset) {
+
+    }
+
+    @Override
+    public void onPanelStateChanged(View panel, PanelState previousState, PanelState newState) {
+        mAdapter.notifyDataSetChanged();
     }
 
     /**
