@@ -19,7 +19,6 @@ import java.util.Date;
 public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.ViewHolder> {
     private ArrayList<StopTime> mValues;
     private final NearMe.OnListFragmentInteractionListener mListener;
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
 
     public StopTimesAdapter(ArrayList<StopTime> items, NearMe.OnListFragmentInteractionListener listener) {
         mValues = items;

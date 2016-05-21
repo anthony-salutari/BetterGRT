@@ -6,7 +6,7 @@ import com.google.maps.android.clustering.ClusterItem;
 /**
  * Created by Anthony on 12/24/2015.
  */
-public class BusStop implements ClusterItem{
+public class BusStop implements ClusterItem {
     public double stopLat;
     public double stopLon;
     public String stopID;

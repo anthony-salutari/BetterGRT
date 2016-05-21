@@ -44,9 +44,20 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Utilities.onCreateChangeTheme(this);
+        // check if first time running app to set some values
+        mPreferences = getSharedPreferences("app_status", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = mPreferences.edit();
+        if (mPreferences.getBoolean("first", true)) {
+            Utilities.mTheme = Utilities.BLUE;
+            editor.putBoolean("first", false).apply();
+        }
+        else {
+            Utilities.mTheme = mPreferences.getInt("theme", Utilities.BLUE);
+            Utilities.mMarkerHue = mPreferences.getFloat("markerHue", 207);
+            Utilities.mSelectedMarkerHue = mPreferences.getFloat("selectedMarkerHue", 27);
+        }
 
-        //mPreferences = getSharedPreferences("app_status", Context.MODE_PRIVATE);
+        Utilities.onCreateChangeTheme(this, mPreferences);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -72,10 +83,6 @@ public class MainActivity extends AppCompatActivity
             fragmentTransaction.replace(R.id.frameLayout, nearMe);
             fragmentTransaction.commit();
         }
-
-        // check if first time running application with sharedpreferences
-        //mPreferences = getSharedPreferences("app_status", Context.MODE_PRIVATE);
-        //SharedPreferences.Editor editor = mPreferences.edit();
     }
 
     @Override
@@ -115,50 +122,52 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
         if (id == R.id.nav_near_me) {
-            NearMe fragment = (NearMe) getSupportFragmentManager().findFragmentById(R.id.nearMeLayout);
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragment = NearMe.newInstance();
-            fragmentTransaction.replace(R.id.frameLayout, fragment);
+            NearMe nearMe = new NearMe();
+            fragmentTransaction.replace(R.id.frameLayout, nearMe);
             fragmentTransaction.commit();
         } else if (id == R.id.nav_map) {
             Snackbar snackbar = Snackbar.make(coordinatorLayout, "Map coming soon", Snackbar.LENGTH_LONG);
             snackbar.show();
         } else if (id == R.id.nav_favourites) {
-            FavouritesFragment fragment = (FavouritesFragment) getSupportFragmentManager().findFragmentById(R.id.favFrag);
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragment = FavouritesFragment.newInstance(1);
-            fragmentTransaction.replace(R.id.frameLayout, fragment);
+            FavouritesFragment favouritesFragment = new FavouritesFragment();
+            fragmentTransaction.replace(R.id.frameLayout, favouritesFragment);
             fragmentTransaction.commit();
         } else if (id == R.id.nav_theme) {
             final CharSequence[] items = { "Red", "Pink", "Purple", "Deep Purple", "Indigo",
-                    "Blue", "Light Blue", "Cyan", "Teal", "Green",
+                    "Blue (Default)", "Light Blue", "Cyan", "Teal", "Green",
                     "Light Green", "Lime", "Yellow", "Amber", "Orange",
                     "Deep Orange", "Brown", "Grey", "Blue Grey" };
+
+            int currentTheme = mPreferences.getInt("theme", Utilities.BLUE);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this, getThemeId());
 
             builder.setTitle("Select Theme");
-            builder.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+            builder.setSingleChoiceItems(items, currentTheme, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Utilities.changeTheme(MainActivity.this, which);
+                        Utilities.changeTheme(MainActivity.this, which, mPreferences);
                     }
                 });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 
             AlertDialog alert = builder.create();
             alert.show();
-            //Snackbar snackbar = Snackbar.make(coordinatorLayout, "Themes coming soon", Snackbar.LENGTH_LONG);
-            //snackbar.show();
         } else if (id == R.id.nav_share) {
             Snackbar snackbar = Snackbar.make(coordinatorLayout, "Share coming soon", Snackbar.LENGTH_LONG);
             snackbar.show();
         } else if (id == R.id.nav_about) {
-            AboutFragment fragment = (AboutFragment) getSupportFragmentManager().findFragmentById(R.id.aboutLayout);
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragment = AboutFragment.newInstance("dkfj", "lakdjf");
-            fragmentTransaction.replace(R.id.frameLayout, fragment);
+            AboutFragment aboutFragment = new AboutFragment();
+            fragmentTransaction.replace(R.id.frameLayout, aboutFragment);
             fragmentTransaction.commit();
         } else if (id == R.id.nav_donate) {
             Snackbar snackbar = Snackbar.make(coordinatorLayout, "Donate coming soon", Snackbar.LENGTH_LONG);

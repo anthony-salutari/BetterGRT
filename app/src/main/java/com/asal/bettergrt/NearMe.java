@@ -1,19 +1,23 @@
 package com.asal.bettergrt;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.NestedScrollView;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -21,7 +25,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ScrollView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,8 +45,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.MarkerManager;
-import com.google.maps.android.clustering.ClusterManager;
-import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
@@ -50,10 +52,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -66,7 +66,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnCameraChangeListener,
         GoogleMap.OnMarkerClickListener,
-        LocationListener,
+        android.location.LocationListener,
         SlidingUpPanelLayout.PanelSlideListener {
 
     private GoogleMap mMap;
@@ -74,10 +74,12 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
     private ArrayList<BusStop> stops;
-    private ClusterManager<OldBusStop> stopsClusterManager;
     private SlidingUpPanelLayout mSlidingLayout;
     private MarkerManager markerManager;
     private Marker mPrevMarker;
+    private LocationManager mLocationManager;
+    private RealtimeLocationHelper realtimeLocationHelper;
+    public int mId;
 
     private RecyclerView mRecyclerView;
     private StopTimesAdapter mAdapter;
@@ -120,6 +122,14 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             }
         });
 
+        ImageButton notificationButton = (ImageButton) rootView.findViewById(R.id.notificationButton);
+        notificationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                createNotification();
+            }
+        });
+
         mStopTimes = new ArrayList<>();
 
         // set up recyclerview
@@ -137,6 +147,8 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
         mSlidingLayout = (SlidingUpPanelLayout) rootView.findViewById(R.id.sliding_layout);
         mSlidingLayout.setPanelState(PanelState.HIDDEN);
+
+        realtimeLocationHelper = new RealtimeLocationHelper();
 
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -156,11 +168,13 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                     .build();
         }
 
-        // todo set these values correctly
+/*        // todo set these values correctly
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(100000000);
         mLocationRequest.setFastestInterval(5000000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);*/
+        mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 1, this);
 
         // load the stops
         stops = new ArrayList<>();
@@ -220,6 +234,11 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+        if (mSlidingLayout != null) {
+            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        }
+
         if (context instanceof OnListFragmentInteractionListener) {
             mListener = (OnListFragmentInteractionListener) context;
         } else {
@@ -231,6 +250,11 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     @Override
     public void onDetach() {
         super.onDetach();
+
+        if (mSlidingLayout != null) {
+            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        }
+
         mListener = null;
     }
 
@@ -257,7 +281,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 }
 
                 if (mPrevMarker != null) {
-                    mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+                    mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mMarkerHue));
                 }
             }
         });
@@ -280,7 +304,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        startLocationUpdates();
+        //startLocationUpdates();
     }
 
     @Override
@@ -293,7 +317,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
     }
 
-    protected void startLocationUpdates() {
+/*    protected void startLocationUpdates() {
         try {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
@@ -301,48 +325,48 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             Snackbar snackbar = Snackbar.make(getView(), "Error " + e.getMessage(), Snackbar.LENGTH_LONG);
             snackbar.show();
         }
-    }
+    } */
 
     @Override
     public void onLocationChanged(Location location) {
-        mLastLocation = location;
+        try {
+            mLastLocation = location;
+            mLocationManager.removeUpdates(this);
+        } catch (SecurityException e) {
+            // handle exception
+        }
         updateMap();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 
     private void updateMap() {
 /*        LatLng location = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
         mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(18));*/
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(18)); */
 
         if (stops.size() != 0) {
             for (BusStop stop : stops) {
                 try {
-                    markerManager.getCollection("markerCollection").addMarker(new MarkerOptions().position(stop.location).title(stop.stopID + " " + stop.stopName));
+                    markerManager.getCollection("markerCollection").addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(Utilities.mMarkerHue)).position(stop.location).title(stop.stopID + " " + stop.stopName));
                 } catch (Exception e) {
                     Log.d("BetterGRT", e.getMessage());
                 }
             }
         }
-
-        // add markers for each stop
-/*        for (int i = 0; i < stops.size(); i++) {
-            try {
-
-                double latitude = Double.parseDouble(stops.get(i)[0]);
-                double longitude = Double.parseDouble(stops.get(i)[2]);
-                LatLng stopLocation = new LatLng(latitude, longitude);
-                OldBusStop stop = new OldBusStop();
-                stop.location = stopLocation;
-                stop.id = Integer.parseInt(stops.get(i)[3]);
-                stop.name = stops.get(i)[7];
-
-                markerManager.getCollection("markerCollection").addMarker(new MarkerOptions().position(stop.location).title(stop.id + " " + stop.name));
-
-            } catch (Exception e) {
-                Snackbar snackbar = Snackbar.make(getView(), "Error: " + e.getMessage(), Snackbar.LENGTH_LONG);
-                snackbar.show();
-            }
-        }*/
     }
 
     @Override
@@ -352,7 +376,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         switch(requestCode) {
             case PERMISSION_FINE_LOCATION: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startLocationUpdates();
+                    //startLocationUpdates();
                 }
                 else {
                     //todo handle denied location permission
@@ -383,16 +407,18 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     @Override
     public boolean onMarkerClick(final Marker marker) {
         if (mPrevMarker != null) {
-            mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+            mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mMarkerHue));
         }
 
         mPrevMarker = marker;
+
+        realtimeLocationHelper.getTripUpdates();
 
         stopDetails.setText(marker.getTitle());
 
         marker.hideInfoWindow();
         //marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(207));
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mSelectedMarkerHue));
         if (mMap.getCameraPosition().zoom < 15) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
         }
@@ -439,6 +465,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                mRecyclerView.scrollToPosition(0);
                                 mAdapter.addItems(mStopTimes);
                             }
                         });
@@ -465,7 +492,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 mSlidingLayout.setPanelState(PanelState.COLLAPSED);
             }
             else if (mSlidingLayout.getPanelState() == PanelState.COLLAPSED) {
-                mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker());
+                mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mMarkerHue));
                 mSlidingLayout.setPanelState(PanelState.HIDDEN);
             }
         }
@@ -498,5 +525,31 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
         void onListFragmentInteraction(StopTime item);
+    }
+
+    private void createNotification() {
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getActivity())
+                .setSmallIcon(R.drawable.ic_bus)
+                .setContentTitle("BetterGRT")
+                .setContentText("Next bus in -- minutes")
+                .setAutoCancel(true);
+
+        Intent resultIntent = new Intent(getActivity(), MainActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getActivity());
+        stackBuilder.addParentStack(MainActivity.class);
+
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        notificationBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        mNotificationManager.notify(mId, notificationBuilder.build());
     }
 }

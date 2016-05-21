@@ -64,8 +64,8 @@
                 <ImageButton
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:id="@+id/busLocationButton"
-                    android:background="@drawable/ic_bus"
+                    android:id="@+id/notificationButton"
+                    android:background="@drawable/ic_notification"
                     android:paddingRight="16dp"
                     android:paddingLeft="16dp"
                     android:layout_gravity="center_vertical"
