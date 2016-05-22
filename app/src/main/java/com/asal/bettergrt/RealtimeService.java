@@ -8,8 +8,10 @@ import android.util.Log;
 
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +37,6 @@ public class RealtimeService extends Service {
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
-        android.os.Debug.waitForDebugger();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -108,10 +109,14 @@ public class RealtimeService extends Service {
 
     private String convertAbsoluteTime(Long time) {
         String formattedTime = null;
+        SimpleDateFormat formatter = new SimpleDateFormat("h:mm:ss a");
+        formatter.setTimeZone(TimeZone.getTimeZone("GMT-4"));
 
         try {
-            Date unformatedTime = new Date(time);
-            formattedTime = new SimpleDateFormat("h:mm:ss").format(unformatedTime);
+            Date date = new Date();
+            date.setTime(time);
+
+            formattedTime = formatter.format(date);
         } catch (Exception e) {
             // handle exception
         }
