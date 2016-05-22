@@ -3,8 +3,10 @@ package com.asal.bettergrt;
 import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -18,6 +20,7 @@ import android.os.Bundle;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -50,6 +53,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -129,6 +133,18 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                 createNotification();
             }
         });
+
+        final TextView realtimeText = (TextView) rootView.findViewById(R.id.realtimeText);
+
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String time = intent.getStringExtra(RealtimeService.EXTRA_ACTUAL_TIME);
+                if (time != null) {
+                    realtimeText.setText(time);
+                }
+            }
+        }, new IntentFilter(RealtimeService.ACTION_REALTIME_BROADCAST));
 
         mStopTimes = new ArrayList<>();
 
@@ -412,7 +428,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
         mPrevMarker = marker;
 
-        realtimeLocationHelper.getTripUpdates();
+        //realtimeLocationHelper.getTripUpdates();
 
         stopDetails.setText(marker.getTitle());
 
@@ -426,7 +442,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()), 1000, null);
         }
 
-        String stopID = marker.getTitle().substring(0, marker.getTitle().indexOf(" "));
+        final String stopID = marker.getTitle().substring(0, marker.getTitle().indexOf(" "));
 
         mStopTimes.clear();
 
@@ -467,6 +483,14 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                             public void run() {
                                 mRecyclerView.scrollToPosition(0);
                                 mAdapter.addItems(mStopTimes);
+
+                                // start the realtime service
+                                Intent intent = new Intent(getActivity(), RealtimeService.class);
+                                intent.putExtra(RealtimeService.EXTRA_STOP_ID, stopID);
+                                // TODO only starting the service on the first stoptime for testing purposes implement more robust functionality later
+                                intent.putExtra(RealtimeService.EXTRA_ROUTE_ID, mStopTimes.get(0).routeID);
+                                getActivity().startService(intent);
+                                //getActivity().startService(new Intent(getActivity(), RealtimeService.class));
                             }
                         });
                     } catch (Exception e) {

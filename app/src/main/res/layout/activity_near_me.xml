@@ -79,7 +79,7 @@
                     android:paddingRight="16dp"
                     android:paddingLeft="16dp"
                     android:layout_gravity="center_vertical"
-                    android:layout_marginRight="16dp"/>
+                    android:layout_marginRight="16dp" />
 
             </LinearLayout>
 
@@ -87,6 +87,12 @@
                 android:layout_height="1dp"
                 android:layout_width="match_parent"
                 android:background="#DDDDDD" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/realtimeText"
+                android:text="Realtime bus: --:--" />
 
             <include layout="@layout/stop_times_list"
                 android:id="@+id/scrollableView"
