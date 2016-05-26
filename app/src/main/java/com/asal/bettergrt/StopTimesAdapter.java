@@ -18,9 +18,9 @@ import java.util.Date;
  */
 public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.ViewHolder> {
     private ArrayList<StopTime> mValues;
-    private final NearMe.OnListFragmentInteractionListener mListener;
+    private final Map.OnListFragmentInteractionListener mListener;
 
-    public StopTimesAdapter(ArrayList<StopTime> items, NearMe.OnListFragmentInteractionListener listener) {
+    public StopTimesAdapter(ArrayList<StopTime> items, Map.OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }

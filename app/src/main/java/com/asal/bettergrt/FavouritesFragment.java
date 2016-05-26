@@ -2,7 +2,9 @@ package com.asal.bettergrt;
 
 import android.app.ListFragment;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,8 +13,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.asal.bettergrt.dummy.DummyContent;
-import com.asal.bettergrt.dummy.DummyContent.DummyItem;
+import com.google.gson.Gson;
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A fragment representing a list of Items.
@@ -21,27 +27,16 @@ import com.asal.bettergrt.dummy.DummyContent.DummyItem;
  * interface.
  */
 public class FavouritesFragment extends Fragment {
-
-    // TODO: Customize parameter argument names
-    private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
-    private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
+    private ArrayList<FavouriteStop> mItems;
+    private SharedPreferences mFavouritePreferences;
+    private FavouritesAdapter mAdapter;
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
     public FavouritesFragment() {
     }
 
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
-    public static FavouritesFragment newInstance(int columnCount) {
+    public static FavouritesFragment newInstance() {
         FavouritesFragment fragment = new FavouritesFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
-        fragment.setArguments(args);
         return fragment;
     }
 
@@ -51,8 +46,19 @@ public class FavouritesFragment extends Fragment {
 
         getActivity().setTitle("Favourites");
 
-        if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+        // get the favourite stops from the shared preference
+        mFavouritePreferences = getActivity().getSharedPreferences(Utilities.PREFERENCE_FAVOURITES, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        String favourites = mFavouritePreferences.getString("favourites", "");
+        if (favourites.isEmpty()) {
+            //Snackbar snackbar = Snackbar.make(getView(), "No favourite stops. Add some from the map", Snackbar.LENGTH_INDEFINITE);
+            //snackbar.show();
+        }
+        else {
+            Type type = new TypeToken<List<FavouriteStop>>() {
+            }.getType();
+
+            mItems = gson.fromJson(favourites, type);
         }
     }
 
@@ -61,18 +67,18 @@ public class FavouritesFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_favourites_list, container, false);
 
-        // Set the adapter
+        mAdapter = new FavouritesAdapter(mItems, mListener);
+
+        // configure recyclerview
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
             recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
-            recyclerView.setAdapter(new MyfavouritesRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            recyclerView.setAdapter(mAdapter);
+            recyclerView.setHasFixedSize(true);
         }
+
         return view;
     }
 
@@ -106,6 +112,6 @@ public class FavouritesFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(FavouriteStop item);
     }
 }

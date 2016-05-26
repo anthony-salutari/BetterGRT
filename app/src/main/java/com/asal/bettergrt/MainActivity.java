@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         FavouritesFragment.OnListFragmentInteractionListener,
         AboutFragment.OnFragmentInteractionListener,
-        NearMe.OnListFragmentInteractionListener {
+        Map.OnListFragmentInteractionListener {
 
     private SharedPreferences mPreferences;
     private CoordinatorLayout coordinatorLayout;
@@ -75,12 +75,12 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         // load default section
-        navigationView.setCheckedItem(R.id.nav_near_me);
+        navigationView.setCheckedItem(R.id.nav_map);
         if (savedInstanceState == null) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            NearMe nearMe = new NearMe();
-            fragmentTransaction.replace(R.id.frameLayout, nearMe);
+            Map map = new Map();
+            fragmentTransaction.replace(R.id.frameLayout, map);
             fragmentTransaction.commit();
         }
     }
@@ -125,13 +125,10 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-        if (id == R.id.nav_near_me) {
-            NearMe nearMe = new NearMe();
-            fragmentTransaction.replace(R.id.frameLayout, nearMe);
+        if (id == R.id.nav_map) {
+            Map map = new Map();
+            fragmentTransaction.replace(R.id.frameLayout, map);
             fragmentTransaction.commit();
-        } else if (id == R.id.nav_map) {
-            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Map coming soon", Snackbar.LENGTH_LONG);
-            snackbar.show();
         } else if (id == R.id.nav_favourites) {
             FavouritesFragment favouritesFragment = new FavouritesFragment();
             fragmentTransaction.replace(R.id.frameLayout, favouritesFragment);
@@ -162,9 +159,6 @@ public class MainActivity extends AppCompatActivity
 
             AlertDialog alert = builder.create();
             alert.show();
-        } else if (id == R.id.nav_share) {
-            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Share coming soon", Snackbar.LENGTH_LONG);
-            snackbar.show();
         } else if (id == R.id.nav_about) {
             AboutFragment aboutFragment = new AboutFragment();
             fragmentTransaction.replace(R.id.frameLayout, aboutFragment);
@@ -177,11 +171,6 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
-
     }
 
     @Override
@@ -204,5 +193,10 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
         return 0;
+    }
+
+    @Override
+    public void onListFragmentInteraction(FavouriteStop item) {
+
     }
 }

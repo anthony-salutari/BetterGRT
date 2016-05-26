@@ -7,24 +7,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 //import com.asal.bettergrt.ItemFragment.OnListFragmentInteractionListener;
 import com.asal.bettergrt.dummy.DummyContent.DummyItem;
 
 import java.util.List;
 
-/**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
- * specified {@link OnListFragmentInteractionListener}.
- * TODO: Replace the implementation with code for your data type.
- */
-public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<MyfavouritesRecyclerViewAdapter.ViewHolder> {
-
-    private final List<DummyItem> mValues;
+public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.ViewHolder> {
+    private final List<FavouriteStop> mValues;
     private final FavouritesFragment.OnListFragmentInteractionListener mListener;
+    private int selectedPos = 0;
 
-    public MyfavouritesRecyclerViewAdapter(List<DummyItem> items, FavouritesFragment.OnListFragmentInteractionListener listener) {
+    public FavouritesAdapter(List<FavouriteStop> items, FavouritesFragment.OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -39,11 +33,17 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mstopID.setText(mValues.get(position).stopID);
+        holder.mStopName.setText(mValues.get(position).stopName);
+        holder.mNextScheduledTime.setText(mValues.get(position).nextScheduledTime);
+        holder.mActualTime.setText(mValues.get(position).actualTime);
+        holder.itemView.setSelected(selectedPos == position);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                notifyItemChanged(selectedPos);
+
                 if (null != mListener) {
                     // Notify the active callbacks interface (the activity, if the
                     // fragment is attached to one) that an item has been selected.
@@ -60,14 +60,20 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mContentView;
+        public final TextView mstopID;
+        public final TextView mStopName;
+        public final TextView mNextScheduledTime;
+        public final TextView mActualTime;
         public final ImageButton mDeleteButton;
-        public DummyItem mItem;
+        public FavouriteStop mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mContentView = (TextView) view.findViewById(R.id.content);
+            mstopID = (TextView) view.findViewById(R.id.stopID);
+            mStopName = (TextView) view.findViewById(R.id.stopName);
+            mNextScheduledTime = (TextView) view.findViewById(R.id.nextScheduledTime);
+            mActualTime = (TextView) view.findViewById(R.id.actualTime);
             mDeleteButton = (ImageButton) view.findViewById(R.id.deleteButton);
 
             mDeleteButton.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +93,7 @@ public class MyfavouritesRecyclerViewAdapter extends RecyclerView.Adapter<Myfavo
 
         @Override
         public String toString() {
-            return super.toString() + " '" + mContentView.getText() + "'";
+            return super.toString() + " '" + mStopName.getText() + "'";
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.asal.bettergrt;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,6 +38,9 @@ public class Utilities {
     public static final int BROWN = 16;
     public static final int GREY = 17;
     public static final int BLUE_GREY = 18;
+
+    // shared preferences consts
+    public static final String PREFERENCE_FAVOURITES = "favourite_stops";
 
     public static void changeTheme(Activity activity, int theme, SharedPreferences preferences) {
         mTheme = theme;
@@ -155,5 +159,15 @@ public class Utilities {
         mEditor.putFloat("markerHue", mMarkerHue);
         mEditor.putFloat("selectedMarkerHue", mSelectedMarkerHue);
         mEditor.apply();
+    }
+
+    public static boolean isServiceRunning(Class<?> serviceClass, Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

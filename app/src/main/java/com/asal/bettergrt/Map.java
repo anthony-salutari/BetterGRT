@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -47,6 +48,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.maps.android.MarkerManager;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
@@ -56,8 +59,11 @@ import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -65,7 +71,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class NearMe extends Fragment implements OnMapReadyCallback,
+public class Map extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnCameraChangeListener,
@@ -84,6 +90,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     private LocationManager mLocationManager;
     private RealtimeLocationHelper realtimeLocationHelper;
     public int mId;
+    public Intent mRealtimeServiceIntent;
 
     private RecyclerView mRecyclerView;
     private StopTimesAdapter mAdapter;
@@ -96,20 +103,25 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
 
     private static final int PERMISSION_FINE_LOCATION = 1;
 
-    public static NearMe newInstance() {
-        NearMe nearMe = new NearMe();
-
-        return nearMe;
+    public static Map newInstance() {
+        return new Map();
     }
 
-    public NearMe() {
+    public Map() {
 
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getActivity().setTitle("Map");
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.activity_near_me, container, false);
+        final View rootView = inflater.inflate(R.layout.activity_near_me, container, false);
 
         rootView.setFocusableInTouchMode(true);
         rootView.requestFocus();
@@ -126,11 +138,53 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
             }
         });
 
+        stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
+
         ImageButton notificationButton = (ImageButton) rootView.findViewById(R.id.notificationButton);
         notificationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 createNotification();
+            }
+        });
+
+        ImageButton favouriteButton = (ImageButton) rootView.findViewById(R.id.favouriteButton);
+        favouriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Gson gson = new Gson();
+                SharedPreferences favouritesPreference = getActivity().getSharedPreferences(Utilities.PREFERENCE_FAVOURITES, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = favouritesPreference.edit();
+                ArrayList<FavouriteStop> favouriteStops = new ArrayList<FavouriteStop>();
+
+                String favouriteJson = favouritesPreference.getString("favourites", "");
+
+                if (favouriteJson.isEmpty()) {
+                    favouriteStops = new ArrayList<>();
+                }
+                else {
+                    Type type = new TypeToken<List<FavouriteStop>>() {
+                    }.getType();
+
+                    favouriteStops = gson.fromJson(favouriteJson, type);
+                }
+
+                FavouriteStop favouriteStop = new FavouriteStop();
+                String stopDetailsString = stopDetails.getText().toString();
+
+                // split the stopDetailsString into stopID and stopName
+                int space = stopDetailsString.indexOf(" ");
+                favouriteStop.stopID = stopDetailsString.substring(0, space);
+                favouriteStop.stopName = stopDetailsString.substring(space);
+
+                favouriteStops.add(favouriteStop);
+
+                String json = gson.toJson(favouriteStops);
+
+                editor.putString("favourites", json);
+                editor.apply();
+
+                Toast.makeText(getActivity(), "Favourite Added", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -156,11 +210,9 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
         mRecyclerView.setHasFixedSize(true);
 
-        getActivity().setTitle("Near Me");
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
         mSlidingLayout = (SlidingUpPanelLayout) rootView.findViewById(R.id.sliding_layout);
         mSlidingLayout.setPanelState(PanelState.HIDDEN);
 
@@ -456,7 +508,7 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.d("BetterGRT", "onFailure: " + e.getMessage());
+                Log.d(getString(R.string.log_tag), "onFailure: " + e.getMessage());
             }
 
             @Override
@@ -485,12 +537,11 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
                                 mAdapter.addItems(mStopTimes);
 
                                 // start the realtime service
-                                Intent intent = new Intent(getActivity(), RealtimeService.class);
-                                intent.putExtra(RealtimeService.EXTRA_STOP_ID, stopID);
+                                mRealtimeServiceIntent = new Intent(getActivity(), RealtimeService.class);
+                                mRealtimeServiceIntent.putExtra(RealtimeService.EXTRA_STOP_ID, stopID);
                                 // TODO only starting the service on the first stoptime for testing purposes implement more robust functionality later
-                                intent.putExtra(RealtimeService.EXTRA_ROUTE_ID, mStopTimes.get(0).routeID);
-                                getActivity().startService(intent);
-                                //getActivity().startService(new Intent(getActivity(), RealtimeService.class));
+                                mRealtimeServiceIntent.putExtra(RealtimeService.EXTRA_ROUTE_ID, mStopTimes.get(0).routeID);
+                                getActivity().startService(mRealtimeServiceIntent);
                             }
                         });
                     } catch (Exception e) {
@@ -534,6 +585,13 @@ public class NearMe extends Fragment implements OnMapReadyCallback,
     @Override
     public void onPanelStateChanged(View panel, PanelState previousState, PanelState newState) {
         mAdapter.notifyDataSetChanged();
+
+        // check if panel is hidden and stop the realtime service
+        if (newState == PanelState.HIDDEN) {
+            if (mRealtimeServiceIntent != null) {
+                getActivity().stopService(mRealtimeServiceIntent);
+            }
+        }
     }
 
     /**

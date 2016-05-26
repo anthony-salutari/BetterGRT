@@ -46,20 +46,52 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
-                android:orientation="horizontal" >
+                android:orientation="vertical" >
 
                 <TextView
                     android:id="@+id/stopDetails"
                     android:layout_height="match_parent"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:textSize="16sp"
+                    android:layout_width="wrap_content"
+                    android:textSize="20sp"
                     android:text="Stop Details"
                     android:textColor="#000000"
                     android:gravity="center_vertical"
-                    android:paddingLeft="16dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="16dp" />
+                    android:layout_gravity="center_horizontal|center_vertical" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_height="1dp"
+                android:layout_width="match_parent"
+                android:background="#DDDDDD" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Next Bus Time: "
+                    android:textSize="16sp"
+                    android:textColor="@color/abc_primary_text_material_light"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/realtimeText"
+                    android:text="--:--"
+                    android:textSize="16sp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:textColor="@color/abc_secondary_text_material_light" />
 
                 <ImageButton
                     android:layout_width="24dp"
@@ -75,7 +107,7 @@
                     android:id="@+id/favouriteButton"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:background="@drawable/favorite_button_selector"
+                    android:background="@drawable/ic_favorite"
                     android:paddingRight="16dp"
                     android:paddingLeft="16dp"
                     android:layout_gravity="center_vertical"
@@ -87,12 +119,6 @@
                 android:layout_height="1dp"
                 android:layout_width="match_parent"
                 android:background="#DDDDDD" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/realtimeText"
-                android:text="Realtime bus: --:--" />
 
             <include layout="@layout/stop_times_list"
                 android:id="@+id/scrollableView"

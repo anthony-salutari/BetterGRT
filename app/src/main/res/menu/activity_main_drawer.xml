@@ -6,10 +6,6 @@
             android:icon="@drawable/ic_home"
             android:title="@string/navigation_home" />-->
         <item
-            android:id="@+id/nav_near_me"
-            android:icon="@drawable/ic_near_me"
-            android:title="@string/navigation_near_me" />
-        <item
             android:id="@+id/nav_map"
             android:icon="@drawable/ic_map"
             android:title="@string/navigation_map" />
@@ -25,10 +21,6 @@
                 android:id="@+id/nav_theme"
                 android:icon="@drawable/ic_theme"
                 android:title="@string/navigation_theme" />
-            <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="@string/navigation_share" />
             <item
                 android:id="@+id/nav_about"
                 android:icon="@drawable/ic_about"
