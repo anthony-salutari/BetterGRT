@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
@@ -327,6 +328,15 @@ public class Map extends Fragment implements OnMapReadyCallback,
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if (mSlidingLayout != null) {
+            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        }
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
@@ -517,7 +527,7 @@ public class Map extends Fragment implements OnMapReadyCallback,
                     try {
                         JSONObject jsonResponse = new JSONObject(response.body().string());
 
-                        JSONArray jsonArray = jsonResponse.getJSONArray("info");
+                        JSONArray jsonArray = jsonResponse.getJSONArray("route");
 
                         for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject jsonObject = jsonArray.getJSONObject(i);

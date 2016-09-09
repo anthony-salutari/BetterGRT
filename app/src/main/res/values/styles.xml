@@ -46,7 +46,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Indigo" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_indigo_500</item>
         <item name="colorPrimaryDark">@color/md_indigo_700</item>
@@ -55,7 +55,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Blue" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_blue_500</item>
         <item name="colorPrimaryDark">@color/md_blue_700</item>
@@ -64,7 +64,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="LightBlue" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_light_blue_500</item>
         <item name="colorPrimaryDark">@color/md_light_blue_700</item>
@@ -73,7 +73,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Cyan" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_cyan_500</item>
         <item name="colorPrimaryDark">@color/md_cyan_700</item>
@@ -82,7 +82,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Teal" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_teal_500</item>
         <item name="colorPrimaryDark">@color/md_teal_700</item>
@@ -91,7 +91,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Green" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_green_500</item>
         <item name="colorPrimaryDark">@color/md_green_700</item>
@@ -100,7 +100,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="LightGreen" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_light_green_500</item>
         <item name="colorPrimaryDark">@color/md_light_green_700</item>
@@ -109,7 +109,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Lime" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_lime_500</item>
         <item name="colorPrimaryDark">@color/md_lime_700</item>
@@ -118,7 +118,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Yellow" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_yellow_500</item>
         <item name="colorPrimaryDark">@color/md_yellow_700</item>
@@ -127,7 +127,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Amber" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_amber_500</item>
         <item name="colorPrimaryDark">@color/md_amber_700</item>
@@ -136,7 +136,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Orange" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_orange_500</item>
         <item name="colorPrimaryDark">@color/md_orange_700</item>
@@ -145,7 +145,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="DeepOrange" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_deep_orange_500</item>
         <item name="colorPrimaryDark">@color/md_deep_orange_700</item>
@@ -154,7 +154,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    
+
     <style name="Brown" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/md_brown_500</item>
         <item name="colorPrimaryDark">@color/md_brown_700</item>

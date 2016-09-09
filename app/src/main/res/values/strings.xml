@@ -20,6 +20,8 @@
 
     <string name="action_settings">Settings</string>
 
-    <string name="web_service_url">http://bettergrt.us-west-2.elasticbeanstalk.com/databaseconnector.asmx</string>
+    <string name="web_service_url">http://better-grt.azurewebsites.net/databaseconnector.asmx</string>
+    <string name="title_activity_search">SearchActivity</string>
+    <string name="section_format">Hello World from section: %1$d</string>
 
 </resources>

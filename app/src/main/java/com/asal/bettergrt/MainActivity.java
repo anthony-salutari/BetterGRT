@@ -1,17 +1,14 @@
 package com.asal.bettergrt;
 
-import android.app.Dialog;
-import android.app.ProgressDialog;
+import android.app.SearchableInfo;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.design.widget.NavigationView;
@@ -24,11 +21,8 @@ import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+import android.view.ViewGroup;
 
-import com.asal.bettergrt.dummy.DummyContent;
-
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity
@@ -62,6 +56,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -110,8 +105,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.action_search) {
-            Snackbar snackbar = Snackbar.make(coordinatorLayout, "Search coming soon", Snackbar.LENGTH_LONG);
-            snackbar.show();
+            Intent searchIntent = new Intent(this, SearchActivity.class);
+            startActivity(searchIntent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -141,7 +136,7 @@ public class MainActivity extends AppCompatActivity
 
             int currentTheme = mPreferences.getInt("theme", Utilities.BLUE);
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, getThemeId());
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
             builder.setTitle("Select Theme");
             builder.setSingleChoiceItems(items, currentTheme, new DialogInterface.OnClickListener() {
@@ -150,12 +145,6 @@ public class MainActivity extends AppCompatActivity
                         Utilities.changeTheme(MainActivity.this, which, mPreferences);
                     }
                 });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
 
             AlertDialog alert = builder.create();
             alert.show();
