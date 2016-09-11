@@ -279,10 +279,14 @@ public class Map extends Fragment implements OnMapReadyCallback,
                             busStop.parentStation = jsonObject.getString("parent_station");
                             busStop.location = new LatLng(busStop.stopLat, busStop.stopLon);
 
-                            stops.add(busStop);
+                            if (busStop.parentStation.equals("")) {
+                                stops.add(busStop);
+                            }
                         }
-                    } catch (Exception e) {
-                        Log.d("BetterGRT", "onResponse: " + e.getMessage());
+                    } catch (IOException e) {
+                        Log.d("BetterGRT", "onResponse IOException: " + e.getMessage());
+                    } catch (org.json.JSONException e) {
+                        Log.d("BetterGRT", "onResponse JSONException: " + e.getMessage());
                     } finally {
                         runOnUiThread(new Runnable() {
                             @Override
@@ -508,12 +512,19 @@ public class Map extends Fragment implements OnMapReadyCallback,
 
         mStopTimes.clear();
 
-        // load stop times in recyclerview
         OkHttpClient client = new OkHttpClient();
+        Request request = null;
 
-        Request request = new Request.Builder()
-                .url(getString(R.string.web_service_url) + "/getStopTimes?stopID=" + stopID)
-                .build();
+        // check if the stop is a terminal
+        if (stopID.contains("place")) {
+            request = new Request.Builder()
+                    .url(getString(R.string.web_service_url) + "/getTerminal?stopID=" + stopID)
+                    .build();
+        } else {
+            request = new Request.Builder()
+                    .url(getString(R.string.web_service_url) + "/getStopTimes?stopID=" + stopID)
+                    .build();
+        }
 
         client.newCall(request).enqueue(new Callback() {
             @Override
