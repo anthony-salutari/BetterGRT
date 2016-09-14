@@ -1,5 +1,7 @@
 package com.asal.bettergrt;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -48,6 +50,11 @@ public class SearchActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences mPreferences = getSharedPreferences("app_status", Context.MODE_PRIVATE);
+        Utilities.mTheme = mPreferences.getInt("theme", Utilities.BLUE);
+        Utilities.onCreateChangeTheme(this, mPreferences);
+
         setContentView(R.layout.activity_search);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -73,13 +80,21 @@ public class SearchActivity extends AppCompatActivity {
 
         if (mSearchView != null) {
             // customize the searchview
-            mSearchView.setVersion(SearchView.VERSION_TOOLBAR_ICON);
+            mSearchView.setVersion(SearchView.VERSION_TOOLBAR);
             mSearchView.setVersionMargins(SearchView.VERSION_MARGINS_TOOLBAR_BIG);
             mSearchView.setDivider(true);
             mSearchView.setAnimationDuration(SearchView.ANIMATION_DURATION);
             mSearchView.setHint("Search");
-
-            // check the searchview github for the setarrow method should be implemented in the next release
+            mSearchView.setOnMenuClickListener(new SearchView.OnMenuClickListener() {
+                @Override
+                public void onMenuClick() {
+                    if (mSearchView.isSearchOpen()) {
+                        mSearchView.close(true);
+                    } else {
+                        finish();
+                    }
+                }
+            });
 
             mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override

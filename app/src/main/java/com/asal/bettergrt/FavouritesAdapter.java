@@ -9,7 +9,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 //import com.asal.bettergrt.ItemFragment.OnListFragmentInteractionListener;
-import com.asal.bettergrt.dummy.DummyContent.DummyItem;
 
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mstopID.setText(mValues.get(position).stopID);
+        holder.mStopID.setText(mValues.get(position).stopID);
         holder.mStopName.setText(mValues.get(position).stopName);
         holder.mNextScheduledTime.setText(mValues.get(position).nextScheduledTime);
         holder.mActualTime.setText(mValues.get(position).actualTime);
@@ -60,7 +59,7 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mstopID;
+        public final TextView mStopID;
         public final TextView mStopName;
         public final TextView mNextScheduledTime;
         public final TextView mActualTime;
@@ -70,7 +69,7 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mstopID = (TextView) view.findViewById(R.id.stopID);
+            mStopID = (TextView) view.findViewById(R.id.stopID);
             mStopName = (TextView) view.findViewById(R.id.stopName);
             mNextScheduledTime = (TextView) view.findViewById(R.id.nextScheduledTime);
             mActualTime = (TextView) view.findViewById(R.id.actualTime);

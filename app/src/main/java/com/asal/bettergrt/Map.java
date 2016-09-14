@@ -10,11 +10,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Camera;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -36,9 +38,9 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -57,10 +59,8 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,6 +92,7 @@ public class Map extends Fragment implements OnMapReadyCallback,
     private RealtimeLocationHelper realtimeLocationHelper;
     public int mId;
     public Intent mRealtimeServiceIntent;
+    private CoordinatorLayout coordinatorLayout;
 
     private RecyclerView mRecyclerView;
     private StopTimesAdapter mAdapter;
@@ -122,7 +123,9 @@ public class Map extends Fragment implements OnMapReadyCallback,
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View rootView = inflater.inflate(R.layout.activity_near_me, container, false);
+        final View rootView = inflater.inflate(R.layout.activity_map, container, false);
+
+        coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinatorLayout);
 
         rootView.setFocusableInTouchMode(true);
         rootView.requestFocus();
@@ -162,8 +165,7 @@ public class Map extends Fragment implements OnMapReadyCallback,
 
                 if (favouriteJson.isEmpty()) {
                     favouriteStops = new ArrayList<>();
-                }
-                else {
+                } else {
                     Type type = new TypeToken<List<FavouriteStop>>() {
                     }.getType();
 
@@ -225,8 +227,11 @@ public class Map extends Fragment implements OnMapReadyCallback,
             if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
 
             } else {
-                ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_FINE_LOCATION);
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_FINE_LOCATION);
             }
+        } else {
+            mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 1, this);
         }
 
         if (mGoogleApiClient == null) {
@@ -242,8 +247,6 @@ public class Map extends Fragment implements OnMapReadyCallback,
         mLocationRequest.setInterval(100000000);
         mLocationRequest.setFastestInterval(5000000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);*/
-        mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 1, this);
 
         // load the stops
         stops = new ArrayList<>();
@@ -346,10 +349,13 @@ public class Map extends Fragment implements OnMapReadyCallback,
 
         try {
             mMap.setMyLocationEnabled(true);
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
+
+        LatLng kitchenerLatlng = new LatLng(45.4503, -80.4832);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(kitchenerLatlng));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(10));
 
         UiSettings settings = mMap.getUiSettings();
         settings.setMapToolbarEnabled(false);
@@ -413,6 +419,9 @@ public class Map extends Fragment implements OnMapReadyCallback,
     public void onLocationChanged(Location location) {
         try {
             mLastLocation = location;
+            LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
             mLocationManager.removeUpdates(this);
         } catch (SecurityException e) {
             // handle exception
@@ -455,16 +464,20 @@ public class Map extends Fragment implements OnMapReadyCallback,
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         //super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        switch(requestCode) {
-            case PERMISSION_FINE_LOCATION: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //startLocationUpdates();
+        if (requestCode == PERMISSION_FINE_LOCATION) {
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //startLocationUpdates();
+                try {
+                    mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 1, this);
+                } catch (SecurityException e) {
+                    Snackbar.make(coordinatorLayout, "Error accessing location", Snackbar.LENGTH_LONG).show();
                 }
-                else {
-                    //todo handle denied location permission
-                }
-                return;
+            } else {
+                Snackbar.make(coordinatorLayout, "Location permission denied", Snackbar.LENGTH_LONG).show();
             }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
