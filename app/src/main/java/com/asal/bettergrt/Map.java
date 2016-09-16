@@ -353,9 +353,9 @@ public class Map extends Fragment implements OnMapReadyCallback,
             Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
-        LatLng kitchenerLatlng = new LatLng(45.4503, -80.4832);
+        LatLng kitchenerLatlng = new LatLng(43.45, -80.483333);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(kitchenerLatlng));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(10));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(12));
 
         UiSettings settings = mMap.getUiSettings();
         settings.setMapToolbarEnabled(false);
