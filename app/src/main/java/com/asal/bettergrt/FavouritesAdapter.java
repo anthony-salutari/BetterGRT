@@ -12,6 +12,9 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.ViewHolder> {
     private final List<FavouriteStop> mValues;
     private final FavouritesFragment.OnListFragmentInteractionListener mListener;
@@ -32,10 +35,10 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mStopID.setText(mValues.get(position).stopID);
-        holder.mStopName.setText(mValues.get(position).stopName);
-        holder.mNextScheduledTime.setText(mValues.get(position).nextScheduledTime);
-        holder.mActualTime.setText(mValues.get(position).actualTime);
+        holder.stopID.setText(mValues.get(position).stopID);
+        holder.stopName.setText(mValues.get(position).stopName);
+        holder.nextScheduledTime.setText(mValues.get(position).nextScheduledTime);
+        holder.actualTime.setText(mValues.get(position).actualTime);
         holder.itemView.setSelected(selectedPos == position);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -59,23 +62,21 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mStopID;
-        public final TextView mStopName;
-        public final TextView mNextScheduledTime;
-        public final TextView mActualTime;
-        public final ImageButton mDeleteButton;
         public FavouriteStop mItem;
+
+        @BindView(R.id.stopID) TextView stopID;
+        @BindView(R.id.stopName) TextView stopName;
+        @BindView(R.id.nextScheduledTime) TextView nextScheduledTime;
+        @BindView(R.id.actualTime) TextView actualTime;
+        @BindView(R.id.deleteButton) ImageButton deleteButton;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mStopID = (TextView) view.findViewById(R.id.stopID);
-            mStopName = (TextView) view.findViewById(R.id.stopName);
-            mNextScheduledTime = (TextView) view.findViewById(R.id.nextScheduledTime);
-            mActualTime = (TextView) view.findViewById(R.id.actualTime);
-            mDeleteButton = (ImageButton) view.findViewById(R.id.deleteButton);
 
-            mDeleteButton.setOnClickListener(new View.OnClickListener() {
+            ButterKnife.bind(this, view);
+
+            deleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Snackbar snackbar = Snackbar.make(v, "Delete coming soon", Snackbar.LENGTH_LONG);
@@ -92,7 +93,7 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
 
         @Override
         public String toString() {
-            return super.toString() + " '" + mStopName.getText() + "'";
+            return super.toString() + " '" + stopName.getText() + "'";
         }
     }
 }

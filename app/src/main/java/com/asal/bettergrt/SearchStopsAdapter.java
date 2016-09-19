@@ -7,6 +7,9 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Created by Anthony on 9/11/2016.
  */
@@ -24,30 +27,29 @@ public class SearchStopsAdapter extends RecyclerView.Adapter<SearchStopsAdapter.
 
     @Override
     public void onBindViewHolder(SearchStopsAdapter.ViewHolder holder, int position) {
-
+        BusStop stop = mValues.get(position);
+        holder.stopID.setText(stop.stopID);
+        holder.stopName.setText(stop.stopName);
     }
 
     @Override
     public int getItemCount() {
-        return 0;
+        return mValues.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mStopID;
-        public final TextView mStopName;
-        //public final TextView mNextScheduledTime;
-        //public final TextView mActualTime;
         public BusStop mItem;
+
+        @BindView(R.id.stopID) TextView stopID;
+        @BindView(R.id.stopName) TextView stopName;
 
         public ViewHolder(View view) {
             super(view);
 
             mView = view;
-            mStopID = (TextView) view.findViewById(R.id.stopID);
-            mStopName = (TextView) view.findViewById(R.id.stopName);
-            //mNextScheduledTime = (TextView) view.findViewById(R.id.nextScheduledTime);
-            //mActualTime = (TextView) view.findViewById(R.id.actualTime);
+
+            ButterKnife.bind(this, view);
         }
     }
 }

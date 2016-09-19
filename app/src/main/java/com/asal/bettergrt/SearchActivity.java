@@ -1,11 +1,17 @@
 package com.asal.bettergrt;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.speech.RecognizerIntent;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
 import android.support.v4.app.Fragment;
@@ -13,6 +19,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,32 +27,41 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.lapism.searchview.SearchAdapter;
 import com.lapism.searchview.SearchHistoryTable;
 import com.lapism.searchview.SearchItem;
 import com.lapism.searchview.SearchView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class SearchActivity extends AppCompatActivity {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
     private SectionsPagerAdapter mSectionsPagerAdapter;
+    private ArrayList<BusStop> searchResults;
+    private SearchStopsAdapter recyclerViewAdapter;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
-    private SearchView mSearchView;
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.container) ViewPager viewPager;
+    @BindView(R.id.tabs) TabLayout tabLayout;
+    @BindView(R.id.searchView) SearchView searchView;
+    //@BindView(R.id.search_stops_list) RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +73,8 @@ public class SearchActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_search);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
+
         setSupportActionBar(toolbar);
         setTitle(null);
 
@@ -66,37 +83,37 @@ public class SearchActivity extends AppCompatActivity {
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        viewPager.setAdapter(mSectionsPagerAdapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(mViewPager);
+        tabLayout.setupWithViewPager(viewPager);
 
         setSearchView();
+
+        searchResults = new ArrayList<>();
+
+        setupRecyclerView();
     }
 
     private void setSearchView() {
-        mSearchView = (SearchView) findViewById(R.id.searchView);
-
-        if (mSearchView != null) {
+        if (searchView != null) {
             // customize the searchview
-            mSearchView.setVersion(SearchView.VERSION_TOOLBAR);
-            mSearchView.setVersionMargins(SearchView.VERSION_MARGINS_TOOLBAR_BIG);
-            mSearchView.setDivider(true);
-            mSearchView.setAnimationDuration(SearchView.ANIMATION_DURATION);
-            mSearchView.setHint("Search");
-            mSearchView.setOnMenuClickListener(new SearchView.OnMenuClickListener() {
+            searchView.setVersion(SearchView.VERSION_TOOLBAR);
+            searchView.setVersionMargins(SearchView.VERSION_MARGINS_TOOLBAR_BIG);
+            searchView.setDivider(true);
+            searchView.setAnimationDuration(SearchView.ANIMATION_DURATION);
+            searchView.setHint("Search");
+            searchView.setOnMenuClickListener(new SearchView.OnMenuClickListener() {
                 @Override
                 public void onMenuClick() {
-                    if (mSearchView.isSearchOpen()) {
-                        mSearchView.close(true);
+                    if (searchView.isSearchOpen()) {
+                        searchView.close(true);
                     } else {
                         finish();
                     }
                 }
             });
 
-            mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextChange(String newText) {
                     return false;
@@ -104,10 +121,53 @@ public class SearchActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onQueryTextSubmit(String query) {
+                    try {
+                        OkHttpClient client = new OkHttpClient();
+                        Request request = new Request.Builder()
+                                .url(getString(R.string.web_service_url) + "/searchBusStops?term=" + query)
+                                .build();
+
+                        client.newCall(request).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(Call call, IOException e) {
+
+                            }
+
+                            @Override
+                            public void onResponse(Call call, Response response) throws IOException {
+                                if (response.isSuccessful()) {
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(response.body().string());
+                                        JSONArray jsonArray = jsonObject.getJSONArray("SearchResults");
+
+                                        for (int i = 0; i < jsonArray.length(); i++) {
+                                            JSONObject busStopJson = jsonArray.getJSONObject(i);
+                                            BusStop busStop = new BusStop();
+                                            busStop.stopID = busStopJson.getString("stop_id");
+                                            busStop.stopName = busStopJson.getString("stop_name").replace("\"", "");
+                                            busStop.stopLat = Double.parseDouble(busStopJson.getString("stop_lat"));
+                                            busStop.stopLon = Double.parseDouble(busStopJson.getString("stop_lon"));
+                                            busStop.parentStation = busStopJson.getString("parent_station");
+                                            busStop.location = new LatLng(busStop.stopLat, busStop.stopLon);
+
+                                            searchResults.add(busStop);
+                                        }
+
+
+                                    } catch (JSONException e) {
+                                        // handle JSONException
+                                    }
+                                }
+                            }
+                        });
+                    } catch (Exception e) {
+                        // handle exception
+                    }
+
                     return false;
                 }
             });
-            mSearchView.setOnOpenCloseListener(new SearchView.OnOpenCloseListener() {
+            searchView.setOnOpenCloseListener(new SearchView.OnOpenCloseListener() {
                 @Override
                 public void onClose() {
 
@@ -125,14 +185,23 @@ public class SearchActivity extends AppCompatActivity {
             suggestionsList.add(new SearchItem("search3"));
 
             SearchAdapter searchAdapter = new SearchAdapter(this, suggestionsList);
-            searchAdapter.setOnItemClickListener(new SearchAdapter.OnItemClickListener() {
+            searchAdapter.addOnItemClickListener(new SearchAdapter.OnItemClickListener() {
                 @Override
                 public void onItemClick(View view, int position) {
-                    mSearchView.close(true);
+                    searchView.close(true);
                 }
             });
-            mSearchView.setAdapter(searchAdapter);
+
+            searchView.setAdapter(searchAdapter);
         }
+    }
+
+    private void setupRecyclerView() {
+        /*recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewAdapter = new SearchStopsAdapter(searchResults);
+        recyclerView.setAdapter(recyclerViewAdapter);
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
+        recyclerView.setHasFixedSize(true);*/
     }
 
     @Override
@@ -157,37 +226,19 @@ public class SearchActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    public static class RecyclerViewFragment extends Fragment {
+        // default constructor
+        public RecyclerViewFragment() {
 
-        public PlaceholderFragment() {
         }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
+        @Nullable
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_search, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.search_stops_list, container, false);
+
+
+
             return rootView;
         }
     }
@@ -206,12 +257,11 @@ public class SearchActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return new RecyclerViewFragment();
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 2;
         }
 

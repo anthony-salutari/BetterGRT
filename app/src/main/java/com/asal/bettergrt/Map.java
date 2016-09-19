@@ -66,6 +66,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -85,25 +88,31 @@ public class Map extends Fragment implements OnMapReadyCallback,
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
     private ArrayList<BusStop> stops;
-    private SlidingUpPanelLayout mSlidingLayout;
     private MarkerManager markerManager;
     private Marker mPrevMarker;
     private LocationManager mLocationManager;
     private RealtimeLocationHelper realtimeLocationHelper;
     public int mId;
     public Intent mRealtimeServiceIntent;
-    private CoordinatorLayout coordinatorLayout;
 
-    private RecyclerView mRecyclerView;
     private StopTimesAdapter mAdapter;
 
     private ArrayList<StopTime> mStopTimes;
     private OnListFragmentInteractionListener mListener;
 
-    private TextView stopDetails;
     private final float anchorPoint = 0.3f;
 
     private static final int PERMISSION_FINE_LOCATION = 1;
+
+    private CoordinatorLayout coordinatorLayout;
+
+    @BindView(R.id.stopDetails) TextView stopDetails;
+    @BindView(R.id.notificationButton) ImageButton notificationButton;
+    @BindView(R.id.favouriteButton) ImageButton favouriteButton;
+    @BindView(R.id.realtimeText) TextView realtimeText;
+    @BindView(R.id.scrollableView) RecyclerView recyclerView;
+    @BindView(R.id.sliding_layout) SlidingUpPanelLayout slidingLayout;
+    private Unbinder unbinder;
 
     public static Map newInstance() {
         return new Map();
@@ -125,6 +134,8 @@ public class Map extends Fragment implements OnMapReadyCallback,
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.activity_map, container, false);
 
+        unbinder = ButterKnife.bind(this, rootView);
+
         coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.coordinatorLayout);
 
         rootView.setFocusableInTouchMode(true);
@@ -142,56 +153,19 @@ public class Map extends Fragment implements OnMapReadyCallback,
             }
         });
 
-        stopDetails = (TextView) rootView.findViewById(R.id.stopDetails);
-
-        ImageButton notificationButton = (ImageButton) rootView.findViewById(R.id.notificationButton);
+        // set the onclick methods for the buttons
         notificationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 createNotification();
             }
         });
-
-        ImageButton favouriteButton = (ImageButton) rootView.findViewById(R.id.favouriteButton);
         favouriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Gson gson = new Gson();
-                SharedPreferences favouritesPreference = getActivity().getSharedPreferences(Utilities.PREFERENCE_FAVOURITES, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = favouritesPreference.edit();
-                ArrayList<FavouriteStop> favouriteStops = new ArrayList<FavouriteStop>();
-
-                String favouriteJson = favouritesPreference.getString("favourites", "");
-
-                if (favouriteJson.isEmpty()) {
-                    favouriteStops = new ArrayList<>();
-                } else {
-                    Type type = new TypeToken<List<FavouriteStop>>() {
-                    }.getType();
-
-                    favouriteStops = gson.fromJson(favouriteJson, type);
-                }
-
-                FavouriteStop favouriteStop = new FavouriteStop();
-                String stopDetailsString = stopDetails.getText().toString();
-
-                // split the stopDetailsString into stopID and stopName
-                int space = stopDetailsString.indexOf(" ");
-                favouriteStop.stopID = stopDetailsString.substring(0, space);
-                favouriteStop.stopName = stopDetailsString.substring(space);
-
-                favouriteStops.add(favouriteStop);
-
-                String json = gson.toJson(favouriteStops);
-
-                editor.putString("favourites", json);
-                editor.apply();
-
-                Toast.makeText(getActivity(), "Favourite Added", Toast.LENGTH_SHORT).show();
+                favouriteButtonClick();
             }
         });
-
-        final TextView realtimeText = (TextView) rootView.findViewById(R.id.realtimeText);
 
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(new BroadcastReceiver() {
             @Override
@@ -206,18 +180,13 @@ public class Map extends Fragment implements OnMapReadyCallback,
         mStopTimes = new ArrayList<>();
 
         // set up recyclerview
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.scrollableView);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mAdapter = new StopTimesAdapter(mStopTimes, mListener);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
-        mRecyclerView.setHasFixedSize(true);
+        setupRecyclerView();
 
+        // // TODO: 9/16/2016 see if it's possible to butterknife the mapFragment
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        mSlidingLayout = (SlidingUpPanelLayout) rootView.findViewById(R.id.sliding_layout);
-        mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        slidingLayout.setPanelState(PanelState.HIDDEN);
 
         realtimeLocationHelper = new RealtimeLocationHelper();
 
@@ -307,12 +276,20 @@ public class Map extends Fragment implements OnMapReadyCallback,
         return rootView;
     }
 
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mAdapter = new StopTimesAdapter(mStopTimes, mListener);
+        recyclerView.setAdapter(mAdapter);
+        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
+        recyclerView.setHasFixedSize(true);
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        if (mSlidingLayout != null) {
-            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        if (slidingLayout != null) {
+            slidingLayout.setPanelState(PanelState.HIDDEN);
         }
 
         if (context instanceof OnListFragmentInteractionListener) {
@@ -323,12 +300,47 @@ public class Map extends Fragment implements OnMapReadyCallback,
         }
     }
 
+    private void favouriteButtonClick() {
+        Gson gson = new Gson();
+        SharedPreferences favouritesPreference = getActivity().getSharedPreferences(Utilities.PREFERENCE_FAVOURITES, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = favouritesPreference.edit();
+        ArrayList<FavouriteStop> favouriteStops = new ArrayList<FavouriteStop>();
+
+        String favouriteJson = favouritesPreference.getString("favourites", "");
+
+        if (favouriteJson.isEmpty()) {
+            favouriteStops = new ArrayList<>();
+        } else {
+            Type type = new TypeToken<List<FavouriteStop>>() {
+            }.getType();
+
+            favouriteStops = gson.fromJson(favouriteJson, type);
+        }
+
+        FavouriteStop favouriteStop = new FavouriteStop();
+        String stopDetailsString = stopDetails.getText().toString();
+
+        // split the stopDetailsString into stopID and stopName
+        int space = stopDetailsString.indexOf(" ");
+        favouriteStop.stopID = stopDetailsString.substring(0, space);
+        favouriteStop.stopName = stopDetailsString.substring(space);
+
+        favouriteStops.add(favouriteStop);
+
+        String json = gson.toJson(favouriteStops);
+
+        editor.putString("favourites", json);
+        editor.apply();
+
+        Toast.makeText(getActivity(), "Favourite Added", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
 
-        if (mSlidingLayout != null) {
-            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        if (slidingLayout != null) {
+            slidingLayout.setPanelState(PanelState.HIDDEN);
         }
 
         mListener = null;
@@ -338,8 +350,8 @@ public class Map extends Fragment implements OnMapReadyCallback,
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        if (mSlidingLayout != null) {
-            mSlidingLayout.setPanelState(PanelState.HIDDEN);
+        if (slidingLayout != null) {
+            slidingLayout.setPanelState(PanelState.HIDDEN);
         }
     }
 
@@ -364,8 +376,8 @@ public class Map extends Fragment implements OnMapReadyCallback,
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if (mSlidingLayout.getPanelState() != PanelState.HIDDEN) {
-                    mSlidingLayout.setPanelState(PanelState.HIDDEN);
+                if (slidingLayout.getPanelState() != PanelState.HIDDEN) {
+                    slidingLayout.setPanelState(PanelState.HIDDEN);
                 }
 
                 if (mPrevMarker != null) {
@@ -506,13 +518,9 @@ public class Map extends Fragment implements OnMapReadyCallback,
         }
 
         mPrevMarker = marker;
-
-        //realtimeLocationHelper.getTripUpdates();
-
         stopDetails.setText(marker.getTitle());
 
         marker.hideInfoWindow();
-        //marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mSelectedMarkerHue));
         if (mMap.getCameraPosition().zoom < 15) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15), 1000, null);
@@ -567,7 +575,7 @@ public class Map extends Fragment implements OnMapReadyCallback,
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mRecyclerView.scrollToPosition(0);
+                                recyclerView.scrollToPosition(0);
                                 mAdapter.addItems(mStopTimes);
 
                                 // start the realtime service
@@ -585,11 +593,11 @@ public class Map extends Fragment implements OnMapReadyCallback,
             }
         });
 
-        if (mSlidingLayout.getPanelState() != PanelState.EXPANDED) {
-            mSlidingLayout.setPanelState(PanelState.COLLAPSED);
+        if (slidingLayout.getPanelState() != PanelState.EXPANDED) {
+            slidingLayout.setPanelState(PanelState.COLLAPSED);
         }
         else {
-            mSlidingLayout.setPanelState(PanelState.EXPANDED);
+            slidingLayout.setPanelState(PanelState.EXPANDED);
         }
 
         return true;
@@ -597,12 +605,12 @@ public class Map extends Fragment implements OnMapReadyCallback,
 
     private void backPressed() {
         if (mPrevMarker != null) {
-            if (mSlidingLayout.getPanelState() == PanelState.EXPANDED) {
-                mSlidingLayout.setPanelState(PanelState.COLLAPSED);
+            if (slidingLayout.getPanelState() == PanelState.EXPANDED) {
+                slidingLayout.setPanelState(PanelState.COLLAPSED);
             }
-            else if (mSlidingLayout.getPanelState() == PanelState.COLLAPSED) {
+            else if (slidingLayout.getPanelState() == PanelState.COLLAPSED) {
                 mPrevMarker.setIcon(BitmapDescriptorFactory.defaultMarker(Utilities.mMarkerHue));
-                mSlidingLayout.setPanelState(PanelState.HIDDEN);
+                slidingLayout.setPanelState(PanelState.HIDDEN);
             }
         }
     }
@@ -667,5 +675,12 @@ public class Map extends Fragment implements OnMapReadyCallback,
                 (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
         mNotificationManager.notify(mId, notificationBuilder.build());
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        unbinder.unbind();
     }
 }

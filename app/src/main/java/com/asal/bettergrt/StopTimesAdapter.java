@@ -13,6 +13,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Created by Anthony on 5/8/2016.
  */
@@ -45,8 +48,8 @@ public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.View
 
         }
 
-        holder.mTripHeadsign.setText(mValues.get(position).tripHeadsign.replace("\"", ""));
-        holder.mDepartureTime.setText(convertedTime);
+        holder.tripHeadsign.setText(mValues.get(position).tripHeadsign.replace("\"", ""));
+        holder.departureTime.setText(convertedTime);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,15 +74,15 @@ public class StopTimesAdapter extends RecyclerView.Adapter<StopTimesAdapter.View
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public StopTime mItem;
-        public final TextView mTripHeadsign;
-        public final TextView mDepartureTime;
+
+        @BindView(R.id.tripHeadsign) TextView tripHeadsign;
+        @BindView(R.id.departureTime) TextView departureTime;
 
         public ViewHolder(View view) {
             super(view);
 
             mView = view;
-            mTripHeadsign = (TextView) view.findViewById(R.id.tripHeadsign);
-            mDepartureTime = (TextView) view.findViewById(R.id.departureTime);
+            ButterKnife.bind(this, view);
         }
     }
 }
